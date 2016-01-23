@@ -1,0 +1,17 @@
+*.mat
+*.zip
+*.mexw64
+
+*.aux
+*.log
+*.synctex.gz
+
+/data
+/results
+/old
+/utils/MFE
+/utils/listzipcontents
+/utils/export_fig
+/utils/deprecated
+
+
