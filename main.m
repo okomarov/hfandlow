@@ -5,36 +5,27 @@ OPT_LAG    = 1;
 OPT_PTF_UN = 5;
 
 %% Data
-load('results\alldata')
-master = loadresults('master');
-reton  = loadresults('reton');
+load('results\alldata_betaonly')
 
-% % Things in alldata, already unstacked
-% dsf         = loadresults('dsf');
-% dsf.IsMicro = isMicrocap(dsf,'Prc');
-% dsf         = getMktCap(dsf);
-% rskew       = loadresults('skew');
-% beta        = loadresults('beta5minon');
-% ff          = loadresults('F-F_Research_Data_5_Factors_2x3_daily_TXT');
 %% Signals
 
 % Low freqeuncy signals
 [signals_LF, hpr, rf, mdate] = make_signals_LF(ret,date,ff);
 
 % High freqeuncy signals
-signals_HF = make_signals_HF(xstr2num(permno),date,master,reton,ff,rskew,beta);
+signals_HF = make_signals_HF(xstr2num(permno),date,beta);
 
 inanLF = isnan(signals_LF);
 inanHF = isnan(signals_HF);
-inan = cat(3,repmat(any(inanHF(:,:,1:3) | inanLF(:,:,1:3),3),[1,1,3]),...
-                    any(inanHF(:,:,4)   | inanLF(:,:,4)  ,3));
+inan   = cat(3,inanHF(:,:,1) | inanLF(:,:,1),...
+               inanHF(:,:,2) | inanLF(:,:,2));
 % plot(sum(~any(inanHF(:,:,4)   | inanLF(:,:,4)  ,3),2))  
 % plot(sum(~any(inanHF(:,:,1:3) | inanLF(:,:,1:3),3),2))
 signals_HF(inan) = NaN;
 signals_LF(inan) = NaN;
 
-snames = {'ca','rskd','hsk','bab','rca','rskd5','rskm5','rbab'};
-order  = [1,5,3,2,7,6,4,8];
+snames = {'bab1m','bab1y','rbab1m','rbab1y'};
+order  = [1,3,2,4];
 allsig = cat(3,signals_LF,signals_HF);
 correlations = corrxs(allsig(:,:,order),snames(order));
 %% Lag
@@ -42,7 +33,7 @@ correlations = corrxs(allsig(:,:,order),snames(order));
 signals_LF = signals_LF(1:end-OPT_LAG,:,:);
 signals_HF = signals_HF(1:end-OPT_LAG,:,:);
 isMicro    = isMicro(1:end-OPT_LAG,:);
-cap        = cap(1:end-OPT_LAG,:);
+% cap        = cap(1:end-OPT_LAG,:);
 
 % Lag forward
 hpr   = hpr(1+OPT_LAG:end,:);
@@ -51,43 +42,25 @@ mdate = mdate(1+OPT_LAG:end,:);
 %% Filter micro
 hpr(isMicro) = NaN;
 %% PTFRET
-if OPT_VW
-    opts = struct('PortfolioNumber',OPT_PTF_UN, 'Weights',double(cap));
-else
-    opts = struct('PortfolioNumber',OPT_PTF_UN);
-end
-
-% Alpha
-[ptfret{1,1},~,counts{1,1},avgsig{1,1}] = portfolio_sort(hpr, signals_LF(:,:,1), opts);
-[ptfret{1,2},~,counts{1,2},avgsig{1,2}] = portfolio_sort(hpr, signals_HF(:,:,1), opts);
-
-% Skewness
-[ptfret{2,1},~,counts{2,1},avgsig{2,1}] = portfolio_sort(hpr, signals_LF(:,:,2), opts);
-[ptfret{2,2},~,counts{2,2},avgsig{2,2}] = portfolio_sort(hpr, signals_HF(:,:,2), opts);
-
-% Skewness#2
-[ptfret{3,1},~,counts{3,1},avgsig{3,1}] = portfolio_sort(hpr, signals_LF(:,:,3), opts);
-[ptfret{3,2},~,counts{3,2},avgsig{3,2}] = portfolio_sort(hpr, signals_HF(:,:,3), opts);
 
 % Bab
-[ptfret{4,1},~,~,~,avgsig{4,1}] = bab(hpr,signals_LF(:,:,4),rf);
-[ptfret{4,2},~,~,~,avgsig{4,2}] = bab(hpr,signals_HF(:,:,4),rf);
+[ptfret{1,1},~,~,~,avgsig{1,1}] = bab(hpr,signals_LF(:,:,1),rf);
+[ptfret{1,2},~,~,~,avgsig{1,2}] = bab(hpr,signals_HF(:,:,1),rf);
+
+[ptfret{2,1},~,~,~,avgsig{2,1}] = bab(hpr,signals_LF(:,:,2),rf);
+[ptfret{2,2},~,~,~,avgsig{2,2}] = bab(hpr,signals_HF(:,:,2),rf);
 
 dt = serial2datetime(datenum(1993,(1:size(hpr,1))+2,1)-1);
-desc = cellfun(@(r) stratstats(dt,r*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
+% desc = cellfun(@(x) stratstats(dt,x*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
 
 figure
-for r = 1:4
+for r = 1:2
     for c = 1:2
         n = (r-1)*2+c;
         subplot(420+n)
-        if r < 4
-            plot(dt,cumprod(1+ptfret{r,c}))
-        else
-            plot(dt(12:end),cumprod(1+ptfret{r,c}(12:end,:)))
-        end
-        axis tight
-        set(gca, 'Ylim',[0,10])
+        plot(dt,cumprod(1+nan2zero(ptfret{r,c})))
+%         axis tight
+%         set(gca, 'Ylim',[0,10])
     end
 end
 %% Risk-adjustment

@@ -3,10 +3,11 @@ function [signals,hpr,rf,mdate] = make_signals_LF(ret,date,factors)
 nmonths       = numel(mdate);
 nseries       = size(ret,2);
 
-signals = NaN(nmonths, nseries,4);
+signals = NaN(nmonths, nseries,2);
 hpr     = NaN(nmonths, nseries);
 rf      = NaN(nmonths, 1);
 
+% Monthly
 for ii = 1:nmonths
     imonth = midx == ii;
     nobs   = nnz(imonth);
@@ -16,8 +17,8 @@ for ii = 1:nmonths
     nonans = all(~isnan(r));
     ngood  = nnz(nonans);
     r      = r(:,nonans);
-
-    % Alpha
+    
+    % Betas
     Y     = bsxfun(@minus,r, factors.RF(imonth)/100);
     X     = [ones(nobs,1), factors.MktMinusRF(imonth)/100];
     coeff = NaN(2,ngood);
@@ -25,14 +26,11 @@ for ii = 1:nmonths
     for jj = 1:ngood
         coeff(:,jj) = X\Y(:,jj);
     end
-    signals(ii,nonans,1) = coeff(1,:);
-
-    % Skewness
-    signals(ii,nonans,2) = skewness(r);
-    signals(ii,nonans,3) = sqrt(nobs) * sum(r.^3) ./ sum(r.*r).^1.5;
+    betas = 0.5*coeff(2,:) + 0.5*mean(coeff(2,:));
+    signals(ii,nonans,1) = betas;
 end
 
-% Betas
+% Yearly
 for ii = 12:nmonths
     iyear = ismember(midx, ii-12+1:ii);
     nobs  = nnz(iyear);
@@ -54,7 +52,10 @@ for ii = 12:nmonths
         idx         = ~inan(:,jj);
         coeff(:,jj) = X(idx,:)\Y(idx,jj);
     end
-    signals(ii,nonans,4) = coeff(2,:);
+    
+    % Shrink towards xs mean
+    betas = 0.5*coeff(2,:) + 0.5*mean(coeff(2,:)); 
+    signals(ii,nonans,2) = betas;
 end
 
 % Holding period return
