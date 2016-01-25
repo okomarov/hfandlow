@@ -14,19 +14,17 @@ load('results\alldata_betaonly')
 
 % High freqeuncy signals
 signals_HF = make_signals_HF(xstr2num(permno),date,beta);
-
-inanLF = isnan(signals_LF);
-inanHF = isnan(signals_HF);
-inan   = cat(3,inanHF(:,:,1) | inanLF(:,:,1),...
-               inanHF(:,:,2) | inanLF(:,:,2));
-% plot(sum(~any(inanHF(:,:,4)   | inanLF(:,:,4)  ,3),2))  
-% plot(sum(~any(inanHF(:,:,1:3) | inanLF(:,:,1:3),3),2))
-signals_HF(inan) = NaN;
+nsig       = size(signals_LF,3);
+inan       = false(size(signals_LF));
+for ii = 1:nsig
+    inan(:,:,ii) = isnan(signals_LF(:,:,ii)) | isnan(signals_HF(:,:,ii));
+end
 signals_LF(inan) = NaN;
+signals_HF(inan) = NaN;
 
-snames = {'bab1m','bab1y','rbab1m','rbab1y'};
-order  = [1,3,2,4];
-allsig = cat(3,signals_LF,signals_HF);
+snames       = {'babm','babq','babs','baby','rbabm','rbabq','rbabs','rbaby'};
+order        = reshape(reshape(1:nsig*2,nsig,2)',1,nsig*2);
+allsig       = cat(3,signals_LF,signals_HF);
 correlations = corrxs(allsig(:,:,order),snames(order));
 %% Lag
 % End-of-Month
@@ -43,25 +41,22 @@ mdate = mdate(1+OPT_LAG:end,:);
 hpr(isMicro) = NaN;
 %% PTFRET
 
+[ptfret, avgsig] = deal(cell(nsig,2));
 % Bab
-[ptfret{1,1},~,~,~,avgsig{1,1}] = bab(hpr,signals_LF(:,:,1),rf);
-[ptfret{1,2},~,~,~,avgsig{1,2}] = bab(hpr,signals_HF(:,:,1),rf);
-
-[ptfret{2,1},~,~,~,avgsig{2,1}] = bab(hpr,signals_LF(:,:,2),rf);
-[ptfret{2,2},~,~,~,avgsig{2,2}] = bab(hpr,signals_HF(:,:,2),rf);
+for ii = 1:nsig
+    [ptfret{ii,1},~,~,~,avgsig{ii,1}] = bab(hpr,signals_LF(:,:,ii),rf);
+    [ptfret{ii,2},~,~,~,avgsig{ii,2}] = bab(hpr,signals_HF(:,:,ii),rf);
+end
 
 dt = serial2datetime(datenum(1993,(1:size(hpr,1))+2,1)-1);
 % desc = cellfun(@(x) stratstats(dt,x*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
 
 figure
-for r = 1:2
-    for c = 1:2
-        n = (r-1)*2+c;
-        subplot(420+n)
-        plot(dt,cumprod(1+nan2zero(ptfret{r,c})))
-%         axis tight
-%         set(gca, 'Ylim',[0,10])
-    end
+for ii = 1:nsig*2
+    subplot(nsig,2,ii)
+    plot(dt,cumprod(1+nan2zero(ptfret{order(ii)})))
+    %         axis tight
+    %         set(gca, 'Ylim',[0,10])
 end
 %% Risk-adjustment
 factors = loadresults('RAfactors');
