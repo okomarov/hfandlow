@@ -5,10 +5,10 @@ nmonths       = numel(unDt);
 nseries       = numel(permno);
 signals       = NaN(nmonths, nseries,4);
 
-signals(:,:,1) = getBetaHF(nmonths,nseries,betacomp,midx,1,w);
-signals(:,:,2) = getBetaHF(nmonths,nseries,betacomp,midx,4,w);
-signals(:,:,3) = getBetaHF(nmonths,nseries,betacomp,midx,6,w);
-signals(:,:,4) = getBetaHF(nmonths,nseries,betacomp,midx,12,w);
+signals(:,:,1) = getBetaHF(nmonths,nseries,betacomp,midx,1,w(1));
+signals(:,:,2) = getBetaHF(nmonths,nseries,betacomp,midx,4,w(2));
+signals(:,:,3) = getBetaHF(nmonths,nseries,betacomp,midx,6,w(3));
+signals(:,:,4) = getBetaHF(nmonths,nseries,betacomp,midx,12,w(4));
 end
 
 function betas = getBetaHF(nmonths,nseries,betacomp,midx,len,w)
@@ -19,6 +19,6 @@ for ii = len:nmonths
     betas(ii,:) = tmp(:,1)./tmp(:,2);
 end
 if w ~= 1
-    betas = w*betas + (1-w)*nanmean(betas,2);
+    betas = bsxfun(@plus,w*betas, (1-w)*nanmean(betas,2));
 end
 end

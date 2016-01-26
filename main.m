@@ -10,10 +10,10 @@ load('results\alldata_betaonly')
 %% Signals
 
 % Low freqeuncy signals
-[signals_LF, hpr, rf, mdate] = make_signals_LF(ret,date,ff);
+[signals_LF, hpr, rf, mdate] = make_signals_LF(ret,date,ff,[.3,0.5,1,1]);
 
 % High freqeuncy signals
-signals_HF = make_signals_HF(xstr2num(permno),date,beta);
+signals_HF = make_signals_HF(xstr2num(permno),date,beta,[.5,1,1,1]);
 nsig       = size(signals_LF,3);
 inan       = false(size(signals_LF));
 for ii = 1:nsig

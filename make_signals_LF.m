@@ -19,7 +19,7 @@ rf      = NaN(nmonths, 1);
 % Monthly
 for ii = 1:nmonths
     idx             = midx == ii;
-    signals(ii,:,1) = getBetasLF(ret, factors, idx, lag, w, isBayesW);
+    signals(ii,:,1) = getBetasLF(ret, factors, idx, lag, w(1), isBayesW);
 
     % HPR
     r                 = ret(idx,:);
@@ -34,17 +34,17 @@ end
 % Quarterly
 for ii = 4:nmonths
     idx             = ismember(midx, ii-4+1:ii);
-    signals(ii,:,2) = getBetasLF(ret, factors, idx, lag, w, isBayesW, 50);
+    signals(ii,:,2) = getBetasLF(ret, factors, idx, lag, w(2), isBayesW, 50);
 end
 % Semi-annual
 for ii = 6:nmonths
     idx             = ismember(midx, ii-6+1:ii);
-    signals(ii,:,3) = getBetasLF(ret, factors, idx, lag, w, isBayesW, 100);
+    signals(ii,:,3) = getBetasLF(ret, factors, idx, lag, w(3), isBayesW, 100);
 end
 % Annual
 for ii = 12:nmonths
     idx             = ismember(midx, ii-12+1:ii);
-    signals(ii,:,4) = getBetasLF(ret, factors, idx, lag, w, isBayesW, 200);
+    signals(ii,:,4) = getBetasLF(ret, factors, idx, lag, w(4), isBayesW, 200);
 end
 end
 
