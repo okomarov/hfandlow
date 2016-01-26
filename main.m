@@ -10,12 +10,10 @@ OPT_SHRINK = [0.4,0.5,0.5,0.5];
 load('results\alldata_betaonly')
 
 %% Signals
-
-% Low freqeuncy signals
 [signals_LF, hpr, rf, mdate] = make_signals_LF(ret,date,ff,OPT_SHRINK);
+signals_HF                   = make_signals_HF(xstr2num(permno),date,beta,OPT_SHRINK);
 
-% High freqeuncy signals
-signals_HF = make_signals_HF(xstr2num(permno),date,beta,OPT_SHRINK);
+% NaN-out intersection
 nsig       = size(signals_LF,3);
 inan       = false(size(signals_LF));
 for ii = 1:nsig
@@ -24,10 +22,6 @@ end
 signals_LF(inan) = NaN;
 signals_HF(inan) = NaN;
 
-snames       = {'babm','babq','babs','baby','rbabm','rbabq','rbabs','rbaby'};
-order        = reshape(reshape(1:nsig*2,nsig,2)',1,nsig*2);
-allsig       = cat(3,signals_LF,signals_HF);
-correlations = corrxs(allsig(:,:,order),snames(order));
 %% Lag
 % End-of-Month
 signals_LF = signals_LF(1:end-OPT_LAG,:,:);
@@ -39,38 +33,45 @@ isMicro    = isMicro(1:end-OPT_LAG,:);
 hpr   = hpr(1+OPT_LAG:end,:);
 rf    = rf(1+OPT_LAG:end,:);
 mdate = mdate(1+OPT_LAG:end,:);
-%% Filter micro
-hpr(isMicro) = NaN;
-%% PTFRET
 
+% Filter micro
+hpr(isMicro) = NaN;
+%% BAB ret
 [ptfret, avgsig] = deal(cell(nsig,2));
-% Bab
 for ii = 1:nsig
     [ptfret{ii,1},~,~,~,avgsig{ii,1}] = bab(hpr,signals_LF(:,:,ii),rf);
     [ptfret{ii,2},~,~,~,avgsig{ii,2}] = bab(hpr,signals_HF(:,:,ii),rf);
 end
+%% Desc stats
+snames       = {'babm','babq','babs','baby','rbabm','rbabq','rbabs','rbaby'};
+order        = reshape(reshape(1:nsig*2,nsig,2)',1,nsig*2);
+allsig       = cat(3,signals_LF,signals_HF);
+correlations = corrxs(allsig(:,:,order),snames(order));
 
-dt     = serial2datetime(datenum(1993,(1:size(hpr,1))+2,1)-1);
+dt   = serial2datetime(datenum(1993,(1:size(hpr,1))+2,1)-1);
+idec = dt >= yyyymmdd2datetime(20010501);
+
 desc   = cellfun(@(x) stratstats(dt,x*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
 desc   = cellfun(@(x) renameVarNames(x',{'Low','High','BAB'}), desc,'un',0);
 catfun = @(sig,stats) [stats; array2table(nanmean(sig),'VariableNames',{'Low','High','BAB'},'RowNames',{'Avgsig'})];
 desc   = cellfun(catfun,avgsig,desc,'un',0);
 
 figure
+X = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
+YLIM = [0,6];
 for ii = 1:nsig*2
     subplot(nsig,2,ii)
     inan      = isnan(ptfret{order(ii)});
     lvl       = cumprod(1+nan2zero(ptfret{order(ii)}));
     lvl(inan) = NaN;
+    plot([min(dt(idec)),min(dt(idec))],YLIM,'-.','Color',[0.85,0.85,0.85],'LineWidth',1.5)
+    hold on
     plot(dt,lvl)
-    set(gca, 'TickLabelInterpreter','latex','Ylim',[0,8],'YTick',0:2:8)
+    set(gca, 'TickLabelInterpreter','latex','Ylim',YLIM,'YTick',0:2:YLIM(2),'Layer','Top')
 end
 
 %% PTFRET after decimalization
 % Jan 2001 decimalization in NYSE and April in NASDAQ, take from May
-
-dt   = serial2datetime(datenum(1993,(1:size(hpr,1))+2,1)-1);
-idec = dt >= yyyymmdd2datetime(20010501);
 
 desc2  = cellfun(@(x) stratstats(dt(idec),x(idec,:)*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
 desc2  = cellfun(@(x) renameVarNames(x',{'Low','High','BAB'}), desc2,'un',0);
