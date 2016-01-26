@@ -93,6 +93,20 @@ end
 tratio = coeff./se;
 pval   = 2 * normcdf(-abs(tratio));
 
+[coeff,se] = deal(NaN(nsig,2));
+for ii = 1:nsig
+    nobs = nnz(idec);
+    opts = {'bandwidth',floor(4*(nobs/100)^(2/9))+1,'intercept',false,'type','HAC','weights','BT','display','off'};
+    f    = @(x,y) hac(x, y, opts{:});
+
+    l                        = ones(size(ptfret{ii,2}(idec,:),1),1);
+    [~,se(ii,:),coeff(ii,:)] = f([l, ptfret{ii,1}(idec,end)], ptfret{ii,2}(idec,end));
+end
+% tstat and pvalues
+tratio = coeff./se;
+pval   = 2 * normcdf(-abs(tratio));
+
+sharpetest(ptfret{1,2}(idec,end), ptfret{1,1}(idec,1))
 %% Risk-adjustment
 factors = loadresults('RAfactors');
 factors = factors(ismember(factors.Date, mdate),:);
