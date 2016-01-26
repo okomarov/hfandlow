@@ -51,9 +51,9 @@ for ii = 1:nsig
 end
 
 dt     = serial2datetime(datenum(1993,(1:size(hpr,1))+2,1)-1);
-desc   = cellfun(@(x) stratstats(dt,[x -diff(x,[],2)]*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
+desc   = cellfun(@(x) stratstats(dt,x*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
 desc   = cellfun(@(x) renameVarNames(x',{'Low','High','BAB'}), desc,'un',0);
-catfun = @(sig,stats) [stats; array2table([nanmean(sig) NaN],'VariableNames',{'Low','High','BAB'},'RowNames',{'Avgsig'})];
+catfun = @(sig,stats) [stats; array2table(nanmean(sig),'VariableNames',{'Low','High','BAB'},'RowNames',{'Avgsig'})];
 desc   = cellfun(catfun,avgsig,desc,'un',0);
 
 figure
@@ -72,9 +72,9 @@ end
 dt   = serial2datetime(datenum(1993,(1:size(hpr,1))+2,1)-1);
 idec = dt >= yyyymmdd2datetime(20010501);
 
-desc2  = cellfun(@(x) stratstats(dt(idec),[x(idec,:) -diff(x(idec,:),[],2)]*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
+desc2  = cellfun(@(x) stratstats(dt(idec),x(idec,:)*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
 desc2  = cellfun(@(x) renameVarNames(x',{'Low','High','BAB'}), desc2,'un',0);
-catfun = @(sig,stats) [stats; array2table([nanmean(sig(idec,:)) NaN],'VariableNames',{'Low','High','BAB'},'RowNames',{'Avgsig'})];
+catfun = @(sig,stats) [stats; array2table(nanmean(sig(idec,:)),'VariableNames',{'Low','High','BAB'},'RowNames',{'Avgsig'})];
 desc2  = cellfun(catfun,avgsig,desc2,'un',0);
 
 
@@ -87,7 +87,7 @@ for ii = 1:nsig
     f    = @(x,y) hac(x, y, opts{:});
 
     l                        = ones(size(ptfret{ii,2},1),1);
-    [~,se(ii,:),coeff(ii,:)] = f([l, -diff(ptfret{ii,1},[],2)], -diff(ptfret{ii,2},[],2));
+    [~,se(ii,:),coeff(ii,:)] = f([l, ptfret{ii,1}(:,end)], ptfret{ii,2}(:,end));
 end
 % tstat and pvalues
 tratio = coeff./se;

@@ -1,19 +1,19 @@
 function [ptfret,z, wl, wh, avgbeta] = bab(ret, betas, rf)
 % BAB Betting-against-beta portfolio returns
 %
-%   BAB(RET, BETAS, RF) 
+%   BAB(RET, BETAS, RF)
 %       Same size RET and BETAS panels with the first row of RET
-%       ahead in time, e.g. t+1, and the first row in BETAS as 
+%       ahead in time, e.g. t+1, and the first row in BETAS as
 %       current time, i.e. t.
-%       The risk-free, RF, should have same number of observations 
+%       The risk-free, RF, should have same number of observations
 %       and same time-indexing as RET.
-%       
 %
-%   [PTFRET, Z, WL, WH, AVGSIG] = ... 
-%       PTFRET  - returns of the [low-beta, high-beta]
+%
+%   [PTFRET, Z, WL, WH, AVGSIG] = ...
+%       PTFRET  - returns of the [low-beta, high-beta, BAB]
 %       Z       - beta ranks by row
 %       WL/WH   - weight matrices same size as BETAS
-%       AVGBETA - returns the series of average [low-beta, high-beta]
+%       AVGBETA - returns the series of average [low-beta, high-beta, NaN]
 %
 %   Follows methodology for one-period, hence time subscript is suppressed.
 %
@@ -54,9 +54,11 @@ bl     = nansum(betas.* wl,2);
 ptfret = [(rl-rf)./bl (rh-rf)./bh];
 
 ptfret(inan,:) = NaN;
+ptfret         = [ptfret, ptfret(:,1)-ptfret(:,2)];
 
 if nargout == 5
-    avgbeta = [bl, bh];
+    avgbeta         = [bl, bh];
     avgbeta(inan,:) = NaN;
+    avgbeta         = [avgbeta, NaN(size(avgbeta,1),1)];
 end
 end
