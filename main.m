@@ -4,16 +4,18 @@ OPT_VW = true;
 OPT_LAG    = 1;
 OPT_PTF_UN = 5;
 
+OPT_SHRINK = [0.4,0.5,0.5,0.5];
+
 %% Data
 load('results\alldata_betaonly')
 
 %% Signals
 
 % Low freqeuncy signals
-[signals_LF, hpr, rf, mdate] = make_signals_LF(ret,date,ff,[.3,0.5,1,1]);
+[signals_LF, hpr, rf, mdate] = make_signals_LF(ret,date,ff,OPT_SHRINK);
 
 % High freqeuncy signals
-signals_HF = make_signals_HF(xstr2num(permno),date,beta,[.5,1,1,1]);
+signals_HF = make_signals_HF(xstr2num(permno),date,beta,OPT_SHRINK);
 nsig       = size(signals_LF,3);
 inan       = false(size(signals_LF));
 for ii = 1:nsig
@@ -48,16 +50,49 @@ for ii = 1:nsig
     [ptfret{ii,2},~,~,~,avgsig{ii,2}] = bab(hpr,signals_HF(:,:,ii),rf);
 end
 
-dt = serial2datetime(datenum(1993,(1:size(hpr,1))+2,1)-1);
-% desc = cellfun(@(x) stratstats(dt,x*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
+dt     = serial2datetime(datenum(1993,(1:size(hpr,1))+2,1)-1);
+desc   = cellfun(@(x) stratstats(dt,[x -diff(x,[],2)]*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
+desc   = cellfun(@(x) renameVarNames(x',{'Low','High','BAB'}), desc,'un',0);
+catfun = @(sig,stats) [stats; array2table([nanmean(sig) NaN],'VariableNames',{'Low','High','BAB'},'RowNames',{'Avgsig'})];
+desc   = cellfun(catfun,avgsig,desc,'un',0);
 
 figure
 for ii = 1:nsig*2
     subplot(nsig,2,ii)
-    plot(dt,cumprod(1+nan2zero(ptfret{order(ii)})))
-    %         axis tight
-    %         set(gca, 'Ylim',[0,10])
+    inan      = isnan(ptfret{order(ii)});
+    lvl       = cumprod(1+nan2zero(ptfret{order(ii)}));
+    lvl(inan) = NaN;
+    plot(dt,lvl)
+    set(gca, 'TickLabelInterpreter','latex','Ylim',[0,8],'YTick',0:2:8)
 end
+
+%% PTFRET after decimalization
+% Jan 2001 decimalization in NYSE and April in NASDAQ, take from May
+
+dt   = serial2datetime(datenum(1993,(1:size(hpr,1))+2,1)-1);
+idec = dt >= yyyymmdd2datetime(20010501);
+
+desc2  = cellfun(@(x) stratstats(dt(idec),[x(idec,:) -diff(x(idec,:),[],2)]*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
+desc2  = cellfun(@(x) renameVarNames(x',{'Low','High','BAB'}), desc2,'un',0);
+catfun = @(sig,stats) [stats; array2table([nanmean(sig(idec,:)) NaN],'VariableNames',{'Low','High','BAB'},'RowNames',{'Avgsig'})];
+desc2  = cellfun(catfun,avgsig,desc2,'un',0);
+
+
+%% Tests
+[coeff,se] = deal(NaN(nsig,2));
+for ii = 1:nsig
+    inan = isnan(ptfret{ii,1});
+    nobs = nnz(~inan);
+    opts = {'bandwidth',floor(4*(nobs/100)^(2/9))+1,'intercept',false,'type','HAC','weights','BT','display','off'};
+    f    = @(x,y) hac(x, y, opts{:});
+
+    l                        = ones(size(ptfret{ii,2},1),1);
+    [~,se(ii,:),coeff(ii,:)] = f([l, -diff(ptfret{ii,1},[],2)], -diff(ptfret{ii,2},[],2));
+end
+% tstat and pvalues
+tratio = coeff./se;
+pval   = 2 * normcdf(-abs(tratio));
+
 %% Risk-adjustment
 factors = loadresults('RAfactors');
 factors = factors(ismember(factors.Date, mdate),:);
