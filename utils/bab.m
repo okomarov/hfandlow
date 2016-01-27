@@ -59,6 +59,6 @@ ptfret         = [ptfret, ptfret(:,1)-ptfret(:,2)];
 if nargout == 5
     avgbeta         = [bl, bh];
     avgbeta(inan,:) = NaN;
-    avgbeta         = [avgbeta, NaN(size(avgbeta,1),1)];
+    avgbeta         = [avgbeta, zeros(size(avgbeta,1),1)];
 end
 end
