@@ -1,5 +1,5 @@
 %% Options
-OPT_VW = true;
+OPT_USEETF = true;
 
 OPT_LAG    = 1;
 OPT_PTF_UN = 5;
@@ -10,13 +10,23 @@ OPT_SHRINK = [0.4,0.6,0.6,0.6];
 %% Data
 load('results\alldata_betaonly')
 
+if OPT_USEETF
+    etf           = reton(reton.Permno == 84398,:);
+    etf           = etf(~isnan(etf.RetCC),:);
+    [date,ia,ib]  = intersect(etf.Date, ff.Date);
+    etf           = etf(ia,:);
+    ff            = ff(ib,:);
+    ff.MktMinusRF = etf.RetCC*100 - ff.RF;
+    ret           = ret(ib,:);
+    beta          = beta(ib,:,:);
+end
 %% Signals
 [signals_LF, hpr, rf, mdate] = make_signals_LF(ret,date,ff,OPT_SHRINK);
 signals_HF                   = make_signals_HF(xstr2num(permno),date,beta,OPT_SHRINK);
 
 % NaN-out intersection
-nsig       = size(signals_LF,3);
-inan       = false(size(signals_LF));
+nsig = size(signals_LF,3);
+inan = false(size(signals_LF));
 for ii = 1:nsig
     inan(:,:,ii) = isnan(signals_LF(:,:,ii)) | isnan(signals_HF(:,:,ii));
 end
@@ -24,6 +34,10 @@ signals_LF(inan) = NaN;
 signals_HF(inan) = NaN;
 
 %% Lag
+if OPT_USEETF
+    isMicro = isMicro(2:end,:);
+end
+
 % End-of-Month
 signals_LF = signals_LF(1:end-OPT_LAG,:,:);
 signals_HF = signals_HF(1:end-OPT_LAG,:,:);
