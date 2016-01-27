@@ -19,6 +19,7 @@ for ii = len:nmonths
     betas(ii,:) = tmp(:,1)./tmp(:,2);
 end
 if w ~= 1
-    betas = bsxfun(@plus,w*betas, (1-w)*nanmean(betas,2));
+    betas = w*betas + (1-w);
+%     betas = bsxfun(@plus,w*betas, (1-w)*nanmean(betas,2));
 end
 end

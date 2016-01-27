@@ -4,7 +4,8 @@ OPT_VW = true;
 OPT_LAG    = 1;
 OPT_PTF_UN = 5;
 
-OPT_SHRINK = [0.4,0.5,0.5,0.5];
+OPT_SHRINK = [0.4,0.6,0.6,0.6];
+% OPT_SHRINK = [0.4,0.5,0.5,0.5];
 
 %% Data
 load('results\alldata_betaonly')

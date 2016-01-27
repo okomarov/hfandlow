@@ -69,7 +69,8 @@ if isBayesW
 end
 
 if w ~= 1
-    betas = w.*betas + (1-w)*nanmean(betas,2);
+    betas = w.*betas + (1-w);
+%     betas = w.*betas + (1-w)*nanmean(betas,2);
 end
 end
 
@@ -86,11 +87,12 @@ r      = r(:,nonans);
 % Betas
 Y        = bsxfun(@minus,r, factors.RF/100);
 X        = [ones(size(r,1),1), factors.MktMinusRF/100];
+inanmkt  = isnan(factors.MktMinusRF);
 coeff    = NaN(1,ngood);
 sigma_ts = NaN(1,ngood);
 
 for jj = 1:ngood
-    idx = ~inan(:,jj);
+    idx = ~(inan(:,jj) | inanmkt);
     n   = nnz(idx);
     x   = X(idx,:);
     y   = Y(idx,jj);
