@@ -85,8 +85,8 @@ inan   = inan(:,nonans);
 r      = r(:,nonans);
 
 % Betas
-Y        = bsxfun(@minus,r, factors.RF/100);
-X        = [ones(size(r,1),1), factors.MktMinusRF/100];
+Y        = log(bsxfun(@minus,r, factors.RF/100)+1);
+X        = [ones(size(r,1),1), log(factors.MktMinusRF/100+1)];
 inanmkt  = isnan(factors.MktMinusRF);
 coeff    = NaN(1,ngood);
 sigma_ts = NaN(1,ngood);
