@@ -34,6 +34,21 @@ for ii = 1:nsig*2
     print(sprintf('strat%d',ii),'-depsc','-r200')
 end
 close all
+
+YLIM = [0,2.5];
+decdt = [dt(find(idec,1,'first')-1), dt(idec)];
+for ii = 1:nsig*2
+    figure
+    set(gcf, 'Position', get(gcf,'Position').*[1,1,0.65,0.4],'PaperPositionMode','auto')
+    lvl = [ones(1,3); cumprod(1+ptfret{order(ii)}(idec,:))];
+    plot(decdt,lvl)
+    hold on
+    h = plot(get(gca,'Xlim'),[1,1],'-k');
+    uistack(h,'bottom')
+    set(gca, 'TickLabelInterpreter','latex','Ylim',YLIM,'YTick',0:1:YLIM(2),'Layer','Top')
+    print(sprintf('strat_dec%d',ii),'-depsc','-r200')
+end
+close all
 %% Trends in SP500 betas
 myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
 
