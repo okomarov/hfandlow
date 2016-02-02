@@ -1,3 +1,39 @@
+%% BAB weights example
+N = 10;
+z    = 1:N;
+zbar = mean(z);
+w = [-min(z-zbar,0)/sum(abs(zbar-z))*2, max(z-zbar,0)/sum(abs(zbar-z))*2];
+
+figure
+set(gcf, 'Position', get(gcf,'Position').*[1,1,1,0.62],'PaperPositionMode','auto')
+stem(z(:), reshape(w,N,[]), 'filled')
+xticklabels = get(gca,'XTickLabel');
+set(gca,'TickLabelInterpreter','latex','Xlim',[0,N+1],'XTickLabel',[' '; xticklabels;' '])
+print('BabWeightExample','-depsc','-r200')
+%% Strategy plots
+ptfret = loadresults('ptfret_plot');
+
+nsig = size(ptfret,1);
+order = reshape(reshape(1:nsig*2,nsig,2)',1,nsig*2);
+
+dt   = serial2datetime(datenum(1993,(1:size(ptfret{1},1))+2,1)-1);
+idec = dt >= yyyymmdd2datetime(20010501);
+X    = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
+YLIM = [0,6];
+for ii = 1:nsig*2
+    figure
+    set(gcf, 'Position', get(gcf,'Position').*[1,1,0.65,0.4],'PaperPositionMode','auto')
+    inan      = isnan(ptfret{order(ii)});
+    lvl       = cumprod(1+nan2zero(ptfret{order(ii)}));
+    lvl(inan) = NaN;
+    plot(dt,lvl)
+    hold on
+    h = plot([min(dt(idec)),min(dt(idec))],YLIM,'-.','Color',[0.85,0.85,0.85],'LineWidth',1.5);
+    uistack(h,'bottom')
+    set(gca, 'TickLabelInterpreter','latex','Ylim',YLIM,'YTick',0:2:YLIM(2),'Layer','Top')
+    print(sprintf('strat%d',ii),'-depsc','-r200')
+end
+close all
 %% Trends in SP500 betas
 myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
 
