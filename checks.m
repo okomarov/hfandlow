@@ -16,20 +16,23 @@ ptfret = loadresults('ptfret_plot');
 nsig = size(ptfret,1);
 order = reshape(reshape(1:nsig*2,nsig,2)',1,nsig*2);
 
-dt   = serial2datetime(datenum(1993,(1:size(ptfret{1},1))+2,1)-1);
+dt   = serial2datetime(datenum(1993,(1:size(ptfret{1},1)+1)+1,1)-1);
 idec = dt >= yyyymmdd2datetime(20010501);
 X    = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
 YLIM = [0,6];
+mrkStep = 15;
 for ii = 1:nsig*2
     figure
     set(gcf, 'Position', get(gcf,'Position').*[1,1,0.65,0.4],'PaperPositionMode','auto')
-    inan      = isnan(ptfret{order(ii)});
-    lvl       = cumprod(1+nan2zero(ptfret{order(ii)}));
+    inan      = [isnan(ptfret{order(ii)}); false(1,3)];
+    lvl       = cumprod([zeros(1,3); nan2zero(ptfret{order(ii)})] +1);
     lvl(inan) = NaN;
     plot(dt,lvl)
     hold on
     h = plot([min(dt(idec)),min(dt(idec))],YLIM,'-.','Color',[0.85,0.85,0.85],'LineWidth',1.5);
     uistack(h,'bottom')
+    set(gca,'ColorOrderIndex',1)
+    plot(dt(1:mrkStep:end),lvl(1:mrkStep:end,1),'x',dt(1:mrkStep:end),lvl(1:mrkStep:end,2),'+')
     set(gca, 'TickLabelInterpreter','latex','Ylim',YLIM,'YTick',0:2:YLIM(2),'Layer','Top')
     print(sprintf('strat%d',ii),'-depsc','-r200')
 end
@@ -40,11 +43,13 @@ decdt = [dt(find(idec,1,'first')-1), dt(idec)];
 for ii = 1:nsig*2
     figure
     set(gcf, 'Position', get(gcf,'Position').*[1,1,0.65,0.4],'PaperPositionMode','auto')
-    lvl = [ones(1,3); cumprod(1+ptfret{order(ii)}(idec,:))];
+    lvl = [ones(1,3); cumprod(1+ptfret{order(ii)}(idec(2:end),:))];
     plot(decdt,lvl)
     hold on
-    h = plot(get(gca,'Xlim'),[1,1],'-k');
+    h = plot(get(gca,'Xlim'),[1,1],'-','Color',[0.5,0.5,0.5]);
     uistack(h,'bottom')
+    set(gca,'ColorOrderIndex',1)
+    plot(decdt(1:mrkStep:end),lvl(1:mrkStep:end,1),'x',decdt(1:mrkStep:end),lvl(1:mrkStep:end,2),'+')
     set(gca, 'TickLabelInterpreter','latex','Ylim',YLIM,'YTick',0:1:YLIM(2),'Layer','Top')
     print(sprintf('strat_dec%d',ii),'-depsc','-r200')
 end
