@@ -86,14 +86,18 @@ betaMeanByCap = accumarray([rows(:) cols(:)+1], beta(:), [],@nanmean);
 figure
 set(gcf, 'Position', get(gcf,'Position').*[1,1,1,0.42],'PaperPositionMode','auto')
 plot(dt, betamean(:,2:end))
-recessionplot('recessions',datenum(reshape(dt([1,48,92,120]),2,2)'))
+h = recessionplot('recessions',datenum(reshape(dt([1,48,92,120]),2,2)'));
+uistack(h,'bottom')
+set(h,'FaceAlpha',1,'FaceColor',[0.9,0.9,0.9])
 set(gca, 'TickLabelInterpreter','latex','Layer','Top','Ylim',[-1.5,2.5])
 print('betaQuintiles','-depsc','-r200')
 
 figure
 set(gcf, 'Position', get(gcf,'Position').*[1,1,1,0.42],'PaperPositionMode','auto')
 plot(dt, betaMeanByCap(:,[2,4,end]))
-recessionplot('recessions',datenum(reshape(dt([1,48,92,120]),2,2)'))
+h = recessionplot('recessions',datenum(reshape(dt([1,48,92,120]),2,2)'));
+uistack(h,'bottom')
+set(h,'FaceAlpha',1,'FaceColor',[0.9,0.9,0.9])
 set(gca, 'TickLabelInterpreter','latex','Layer','Top','Ylim',[-0.4,1.6])
 print('betaQuintilesCap','-depsc','-r200')
 
