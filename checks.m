@@ -1,8 +1,8 @@
 %% BAB weights example
-N = 10;
+N    = 10;
 z    = 1:N;
 zbar = mean(z);
-w = [-min(z-zbar,0)/sum(abs(zbar-z))*2, max(z-zbar,0)/sum(abs(zbar-z))*2];
+w    = [-min(z-zbar,0)/sum(abs(zbar-z))*2, max(z-zbar,0)/sum(abs(zbar-z))*2];
 
 figure
 set(gcf, 'Position', get(gcf,'Position').*[1,1,1,0.62],'PaperPositionMode','auto')
@@ -13,13 +13,13 @@ print('BabWeightExample','-depsc','-r200')
 %% Strategy plots
 ptfret = loadresults('ptfret_plot');
 
-nsig = size(ptfret,1);
+nsig  = size(ptfret,1);
 order = reshape(reshape(1:nsig*2,nsig,2)',1,nsig*2);
 
-dt   = serial2datetime(datenum(1993,(1:size(ptfret{1},1)+1)+1,1)-1);
-idec = dt >= yyyymmdd2datetime(20010501);
-X    = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
-YLIM = [0,6];
+dt      = serial2datetime(datenum(1993,(1:size(ptfret{1},1)+1)+1,1)-1);
+idec    = dt >= yyyymmdd2datetime(20010501);
+X       = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
+YLIM    = [0,6];
 mrkStep = 15;
 for ii = 1:nsig*2
     figure
@@ -29,7 +29,7 @@ for ii = 1:nsig*2
     lvl(inan) = NaN;
     plot(dt,lvl)
     hold on
-    h = plot([min(dt(idec)),min(dt(idec))],YLIM,'-.','Color',[0.85,0.85,0.85],'LineWidth',1.5);
+    h         = plot([min(dt(idec)),min(dt(idec))],YLIM,'-.','Color',[0.85,0.85,0.85],'LineWidth',1.5);
     uistack(h,'bottom')
     set(gca,'ColorOrderIndex',1)
     plot(dt(1:mrkStep:end),lvl(1:mrkStep:end,1),'x',dt(1:mrkStep:end),lvl(1:mrkStep:end,2),'+')
@@ -38,7 +38,7 @@ for ii = 1:nsig*2
 end
 close all
 
-YLIM = [0,2.5];
+YLIM  = [0,2.5];
 decdt = [dt(find(idec,1,'first')-1), dt(idec)];
 for ii = 1:nsig*2
     figure
@@ -46,7 +46,7 @@ for ii = 1:nsig*2
     lvl = [ones(1,3); cumprod(1+ptfret{order(ii)}(idec(2:end),:))];
     plot(decdt,lvl)
     hold on
-    h = plot(get(gca,'Xlim'),[1,1],'-','Color',[0.5,0.5,0.5]);
+    h   = plot(get(gca,'Xlim'),[1,1],'-','Color',[0.5,0.5,0.5]);
     uistack(h,'bottom')
     set(gca,'ColorOrderIndex',1)
     plot(decdt(1:mrkStep:end),lvl(1:mrkStep:end,1),'x',decdt(1:mrkStep:end),lvl(1:mrkStep:end,2),'+')
@@ -54,6 +54,49 @@ for ii = 1:nsig*2
     print(sprintf('strat_dec%d',ii),'-depsc','-r200')
 end
 close all
+%% Beta quintiles
+% Justifying noise in beta estimates until decimalization
+myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
+
+load('results\20160118_1949_betacomponents5m.mat')
+res      = res(issp500member(res),:);
+res.Beta = res.Num./res.Den;
+res      = getMktCap(res,1);
+res      = res(~isnan(res.Beta),:);
+beta     = myunstack(res,'Beta');
+
+% Monthly sampling
+[~,pos] = unique(beta.Date/100,'last');
+dates   = beta.Date(pos);
+dt      = yyyymmdd2datetime(dates);
+beta    = beta{pos,2:end};
+
+% Beta quintiles
+sz       = size(beta);
+rows     = repmat((1:sz(1))',1,sz(2));
+cols     = binSignal(beta);
+betamean = accumarray([rows(:) cols(:)+1], beta(:), [],@nanmean);
+
+% Quintiles sorted by cap
+cap           = myunstack(res,'Cap');
+cap           = cap{pos,2:end};
+cols          = binSignal(cap);
+betaMeanByCap = accumarray([rows(:) cols(:)+1], beta(:), [],@nanmean);
+
+figure
+set(gcf, 'Position', get(gcf,'Position').*[1,1,1,0.42],'PaperPositionMode','auto')
+plot(dt, betamean(:,2:end))
+recessionplot('recessions',datenum(reshape(dt([1,48,92,120]),2,2)'))
+set(gca, 'TickLabelInterpreter','latex','Layer','Top','Ylim',[-1.5,2.5])
+print('betaQuintiles','-depsc','-r200')
+
+figure
+set(gcf, 'Position', get(gcf,'Position').*[1,1,1,0.42],'PaperPositionMode','auto')
+plot(dt, betaMeanByCap(:,[2,4,end]))
+recessionplot('recessions',datenum(reshape(dt([1,48,92,120]),2,2)'))
+set(gca, 'TickLabelInterpreter','latex','Layer','Top','Ylim',[-0.4,1.6])
+print('betaQuintilesCap','-depsc','-r200')
+
 %% Trends in SP500 betas
 myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
 
