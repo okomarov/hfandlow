@@ -3,6 +3,7 @@ OPT_USEETF = false;
 
 OPT_LAG    = 1;
 OPT_PTF_UN = 5;
+OPT_PTF_DB = 3;
 
 OPT_BLOCKS_DEC = {1 6 2 1}';
 
@@ -27,13 +28,13 @@ end
 signals_HF                   = make_signals_HF(xstr2num(permno),date,beta,OPT_SHRINK);
 
 % NaN-out intersection
-nsig = size(signals_LF,3);
-inan = false(size(signals_LF));
+nsig     = size(signals_LF,3);
+inan_sig = false(size(signals_LF));
 for ii = 1:nsig
-    inan(:,:,ii) = isnan(signals_LF(:,:,ii)) | isnan(signals_HF(:,:,ii));
+    inan_sig(:,:,ii) = isnan(signals_LF(:,:,ii)) | isnan(signals_HF(:,:,ii));
 end
-signals_LF(inan) = NaN;
-signals_HF(inan) = NaN;
+signals_LF(inan_sig) = NaN;
+signals_HF(inan_sig) = NaN;
 
 %% Lag
 if OPT_USEETF
@@ -45,6 +46,7 @@ signals_LF = signals_LF(1:end-OPT_LAG,:,:);
 signals_HF = signals_HF(1:end-OPT_LAG,:,:);
 isMicro    = isMicro(1:end-OPT_LAG,:);
 % cap        = cap(1:end-OPT_LAG,:);
+inan_sig   = inan_sig(1:end-OPT_LAG,:,:);
 
 % Lag forward
 hpr   = hpr(1+OPT_LAG:end,:);
@@ -64,33 +66,33 @@ dt   = serial2datetime(datenum(1993,(1:size(signals_LF,1))+2,1)-1);
 idec = dt >= yyyymmdd2datetime(20010501);
 
 % Correlation
-snames       = {'babm','babq','babs','baby','rbabm','rbabq','rbabs','rbaby'};
-order        = reshape(reshape(1:nsig*2,nsig,2)',1,nsig*2);
-allsig       = cat(3,signals_LF,signals_HF);
-correlations = corrxs(allsig(:,:,order),snames(order));
+snames           = {'babm','babq','babs','baby','rbabm','rbabq','rbabs','rbaby'};
+order            = reshape(reshape(1:nsig*2,nsig,2)',1,nsig*2);
+allsig           = cat(3,signals_LF,signals_HF);
+correlations     = corrxs(allsig(:,:,order),snames(order));
 correlations_dec = corrxs(allsig(idec,:,order),snames(order));
 
-% Plot
-figure
-X    = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
-YLIM = [0,6];
-for ii = 1:nsig*2
-    subplot(nsig,2,ii)
-    inan      = isnan(ptfret{order(ii)});
-    lvl       = cumprod(1+nan2zero(ptfret{order(ii)}));
-    lvl(inan) = NaN;
-    plot([min(dt(idec)),min(dt(idec))],YLIM,'-.','Color',[0.85,0.85,0.85],'LineWidth',1.5)
-    hold on
-    plot(dt,lvl)
-    set(gca, 'TickLabelInterpreter','latex','Ylim',YLIM,'YTick',0:2:YLIM(2),'Layer','Top')
-end
+% % Plot
+% figure
+% X    = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
+% YLIM = [0,6];
+% for ii = 1:nsig*2
+%     subplot(nsig,2,ii)
+%     inan      = isnan(ptfret{order(ii)});
+%     lvl       = cumprod(1+nan2zero(ptfret{order(ii)}));
+%     lvl(inan) = NaN;
+%     plot([min(dt(idec)),min(dt(idec))],YLIM,'-.','Color',[0.85,0.85,0.85],'LineWidth',1.5)
+%     hold on
+%     plot(dt,lvl)
+%     set(gca, 'TickLabelInterpreter','latex','Ylim',YLIM,'YTick',0:2:YLIM(2),'Layer','Top')
+% end
 
 % Desc stats
 desc   = cellfun(@(x) stratstats(dt,x*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
 desc   = cellfun(@(x) renameVarNames(x',{'Low','High','BAB'}), desc,'un',0);
 catfun = @(sig,stats) [stats; array2table(nanmean(sig),'VariableNames',{'Low','High','BAB'},'RowNames',{'Avgsig'})];
 desc   = cellfun(catfun,avgsig,desc,'un',0);
-out = cell2mat(cellfun(@(x) x{:,:}, desc,'un',0));
+out    = cell2mat(cellfun(@(x) x{:,:}, desc,'un',0));
 
 % Desc stats, post decimalization
 % Jan 2001 decimalization in NYSE and April in NASDAQ, take from May
@@ -98,9 +100,9 @@ desc2  = cellfun(@(x) stratstats(dt(idec),x(idec,:)*100,'Frequency','m','IsPerce
 desc2  = cellfun(@(x) renameVarNames(x',{'Low','High','BAB'}), desc2,'un',0);
 catfun = @(sig,stats) [stats; array2table(nanmean(sig(idec,:)),'VariableNames',{'Low','High','BAB'},'RowNames',{'Avgsig'})];
 desc2  = cellfun(catfun,avgsig,desc2,'un',0);
-out = cell2mat(cellfun(@(x) x{:,:}, desc2,'un',0));
+out    = cell2mat(cellfun(@(x) x{:,:}, desc2,'un',0));
 %% Tests
-[coeff,se,tratio,pval] = regressHighOnLow(ptfret(:,2),ptfret(:,1));
+[coeff,se,tratio,pval]     = regressHighOnLow(ptfret(:,2),ptfret(:,1));
 [coeff2,se2,tratio2,pval2] = regressHighOnLow(ptfret(:,2),ptfret(:,1),idec);
 
 [~,pValST,Zjk]   = cellfun(@(high,low) sharpetest(high(:,end), low(:,end)), ptfret(:,2),ptfret(:,1));
@@ -114,6 +116,39 @@ blocks = cellfun(@(high,low) blockSizeCalibrate([high(:,end), low(:,end)]), ptfr
 % OPT_BLOCKS_DEC = cellfun(@(high,low) blockSizeCalibrate([high(idec,end), low(idec,end)]), ptfret(:,2),ptfret(:,1));
 
 [se5, pval5] = cellfun(@(high,low,b) bootInference([high(idec,end), low(idec,end)],b,[],[],0), ptfret(:,2),ptfret(:,1),OPT_BLOCKS_DEC);
+%% Double-sorts
+illiq = loadresults('illiq');
+illiq = illiq(1:end-OPT_LAG,:,:);
+
+SR = repmat({NaN(OPT_PTF_DB,2)},nsig,1);
+
+for ii = 1:nsig
+    il                   = illiq;
+    il(inan_sig(:,:,ii)) = NaN;
+    [bins,counts]        = binSignal(il,'PortfolioNumber',OPT_PTF_DB);
+
+    for jj = 1:OPT_PTF_DB
+        iLiq = bins == jj;
+
+        % Low freq
+        signal                = signals_LF(:,:,ii);
+        signal(~iLiq)         = NaN;
+        [tmpret,~,~,~,tmpsig] = bab(hpr,signal,rf);
+
+        s = stratstats(dt(idec), tmpret(idec,:)*100,'Frequency','m','IsPercentageReturn',true);
+
+        SR{ii}(jj,1) = s.SR(end);
+
+        % High freq
+        signal                = signals_HF(:,:,ii);
+        signal(~iLiq)         = NaN;
+        [tmpret,~,~,~,tmpsig] = bab(hpr,signal,rf);
+
+        s            = stratstats(dt(idec), tmpret(idec,:)*100,'Frequency','m','IsPercentageReturn',true);
+        SR{ii}(jj,2) = s.SR(end);
+    end
+end
+
 %% Risk-adjustment
 factors = loadresults('RAfactors');
 factors = factors(ismember(factors.Date, mdate),:);

@@ -1,7 +1,7 @@
 
 OPT_LAGDAY   = 1;
 OPT_BETAFREQ = 75;
-OPT_USEON = false;
+OPT_USEON    = false;
 %% Select data
 % Index data
 datapath = '..\data\TAQ\sampled\5min\nobad_vw';
@@ -97,3 +97,37 @@ ff = loadresults('F-F_Research_Data_5_Factors_2x3_daily_TXT');
 ff = ff(ismember(ff.Date, unique(dsf.Date)),:);
 
 save results\alldata_betaonly master date permno ret isMicro reton beta ff
+%% Illiquidity
+myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
+load('results\alldata_betaonly','permno','date')
+
+dsf = loadresults('dsfquery','..\results');
+idx = ismember(dsf.Permno, xstr2num(permno));
+dsf = dsf(idx,:);
+
+% Incomplete days
+idx = isprobdate(dsf.Date);
+dsf = dsf(~idx,:);
+
+% Amihud illiq |r_t|/(price_t.*volume_t)
+dsf.Amihud       = abs(dsf.Ret ./ (double(dsf.Prc).*double(dsf.Vol/100)));
+iinf             = isinf(dsf.Amihud);
+dsf.Amihud(iinf) = NaN;
+illiq            = myunstack(dsf,'Amihud');
+
+idx   = ismember(illiq.Date, date);
+illiq = illiq(idx,:);
+
+% End-of-month average
+[mdate,pos,midx] = unique(illiq.Date/100,'last');
+illiq            = illiq{:,2:end};
+
+nmonths = numel(mdate);
+out     = NaN(nmonths,numel(permno));
+for ii = 12:nmonths
+    idx = ismember(midx, ii-12+1:ii);
+    out(ii,:) = nanmean(illiq(idx,:),1);
+end
+% illiq = log(out);
+illiq = out;
+save results\illiq illiq
