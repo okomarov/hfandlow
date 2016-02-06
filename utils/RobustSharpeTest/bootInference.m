@@ -19,14 +19,21 @@ function [pValue,DeltaHat,d,b] = bootInference(ret,b,M,seType,pw,DeltaNull)
     % d = 'original' test statistic
 % Note:
     % 
-    if nargin < 6 || isempty(DeltaNull),    DeltaNull = 0;    end
-    if nargin < 5 || isempty(pw),           pw = 1;    end
-    if nargin < 4 || isempty(seType),       seType = 'G';    end    
-    if nargin < 3 || isempty(M),            M = 4999;    end  
-    if nargin < 2 || isempty(b),            b = blockSizeCalibrate(ret);    end  
-    
-    ret = ret(~any(isnan(ret),2),:);
-    
+    if (nargin < 6)
+        DeltaNull = 0;
+    end
+    if (nargin < 5)
+        pw = 1;
+    end
+    if (nargin < 4)
+        seType = 'G';
+    end    
+    if (nargin < 3)
+        M = 4999;
+    end  
+    if (nargin < 2)
+        b = blockSizeCalibrate(ret);
+    end  
     % compute observed difference in Sharpe ratios
     DeltaHat              = sharpeRatioDiff(ret);
     % compute HAC standard error (prewhitended if desired)
@@ -46,30 +53,25 @@ function [pValue,DeltaHat,d,b] = bootInference(ret,b,M,seType,pw,DeltaNull)
         % bootstrap pseudo data and various bootstrap statistics
         retStar      = ret(cbbSequence(Tadj,b),:);
         DeltaHatStar = sharpeRatioDiff(retStar);
-        ret1Star     = retStar(:,1);
-        ret2Star     = retStar(:,2);
-        
-        muHatStar  = mean(retStar,1);
-        mu1HatStar = muHatStar(1);
-        mu2HatStar = muHatStar(2);
-
-        gammaHatStar  = mean(retStar.^2,1);
-        gamma1HatStar = gammaHatStar(1);
-        gamma2HatStar = gammaHatStar(2);
-        
-        gradient    = zeros(4,1);
+        ret1Star = retStar(:,1);
+        ret2Star = retStar(:,2);
+        mu1HatStar = mean(ret1Star,1);
+        mu2HatStar = mean(ret2Star,1);
+        gamma1HatStar = mean(ret1Star.^2,1);
+        gamma2HatStar = mean(ret2Star.^2,1);
+        gradient = zeros(4,1);
         gradient(1) = gamma1HatStar/(gamma1HatStar-mu1HatStar^2)^1.5;
         gradient(2) = -gamma2HatStar/(gamma2HatStar-mu2HatStar^2)^1.5;   
         gradient(3) = -0.5*mu1HatStar/(gamma1HatStar-mu1HatStar^2)^1.5;
         gradient(4) = 0.5*mu2HatStar/(gamma2HatStar-mu2HatStar^2)^1.5;
         yStar       = [ret1Star-mu1HatStar,ret2Star-mu2HatStar,ret1Star.^2-gamma1HatStar,ret2Star.^2-gamma2HatStar];
         % compute bootstrap standard error
-        yStarC      = cumsum(yStar);
-        yStarMean   = [yStarC(b,:); yStarC(b+1:end,:)-yStarC(1:end-b,:)];
-        zetaStar    = bRoot*yStarMean(1:b:end,:)./b;
-        PsiHatStar  = zetaStar'*zetaStar;
-        PsiHatStar  = PsiHatStar/l;
-        seStar      = sqrt(gradient'*PsiHatStar*gradient/Tadj);
+        yStarC     = cumsum(yStar);
+        yStarMean  = [yStarC(b,:); yStarC(b+1:end,:)-yStarC(1:end-b,:)];
+        zetaStar   = bRoot*yStarMean(1:b:end,:)./b;
+        PsiHatStar = zetaStar'*zetaStar;
+        PsiHatStar = PsiHatStar/l;
+        seStar = sqrt(gradient'*PsiHatStar*gradient/Tadj);
         % compute bootstrap test statistic (and update p-value accordingly)
         dStar       = abs(DeltaHatStar-DeltaHat)/seStar;
         if (dStar >= d)
