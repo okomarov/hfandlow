@@ -19,19 +19,19 @@ function [pValue,DeltaHat,d,b] = bootInference(ret,b,M,seType,pw,DeltaNull)
     % d = 'original' test statistic
 % Note:
     % 
-    if (nargin < 6)
+    if nargin < 6
         DeltaNull = 0;
     end
-    if (nargin < 5)
+    if nargin < 5 || isempty(pw)
         pw = 1;
     end
-    if (nargin < 4)
+    if (nargin < 4) || isempty(seType)
         seType = 'G';
     end    
-    if (nargin < 3)
+    if (nargin < 3) || isempty(M)
         M = 4999;
     end  
-    if (nargin < 2)
+    if (nargin < 2) || isempty(b) 
         b = blockSizeCalibrate(ret);
     end  
     % compute observed difference in Sharpe ratios
