@@ -4,6 +4,8 @@ OPT_USEETF = false;
 OPT_LAG    = 1;
 OPT_PTF_UN = 5;
 
+OPT_BLOCKS_DEC = {1 6 2 1}';
+
 OPT_SHRINK = [0.4,0.6,0.6,0.6];
 % OPT_SHRINK = [0.4,0.5,0.5,0.5];
 
@@ -103,6 +105,15 @@ out = cell2mat(cellfun(@(x) x{:,:}, desc2,'un',0));
 
 [~,pValST,Zjk]   = cellfun(@(high,low) sharpetest(high(:,end), low(:,end)), ptfret(:,2),ptfret(:,1));
 [~,pValST2,Zjk2] = cellfun(@(high,low) sharpetest(high(idec,end), low(idec,end)), ptfret(:,2),ptfret(:,1));
+
+[se3, pval3] = cellfun(@(high,low) sharpeHAC([high(:,end), low(:,end)]), ptfret(:,2),ptfret(:,1));
+[se4, pval4] = cellfun(@(high,low) sharpeHAC([high(idec,end), low(idec,end)]), ptfret(:,2),ptfret(:,1));
+
+rng default
+blocks = cellfun(@(high,low) blockSizeCalibrate([high(:,end), low(:,end)]), ptfret(:,2),ptfret(:,1));
+% OPT_BLOCKS_DEC = cellfun(@(high,low) blockSizeCalibrate([high(idec,end), low(idec,end)]), ptfret(:,2),ptfret(:,1));
+
+[se5, pval5] = cellfun(@(high,low,b) bootInference([high(idec,end), low(idec,end)],b,[],[],0), ptfret(:,2),ptfret(:,1),OPT_BLOCKS_DEC);
 %% Risk-adjustment
 factors = loadresults('RAfactors');
 factors = factors(ismember(factors.Date, mdate),:);
