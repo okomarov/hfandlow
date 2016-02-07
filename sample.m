@@ -1,7 +1,7 @@
 
 OPT_LAGDAY   = 1;
 OPT_BETAFREQ = 75;
-OPT_USEON    = false;
+OPT_USEON    = true;
 %% Select data
 % Index data
 datapath = '..\data\TAQ\sampled\5min\nobad_vw';
@@ -35,12 +35,16 @@ master      = master(isEnoughObs,:);
 
 % Beta components at 75, i.e. return from open to 11:00, 12:15, 13:30, 14:45, 16:00
 try
-    beta = loadresults(sprintf('betacomponents%dmon',OPT_BETAFREQ));
+    if OPT_USEON
+        beta = loadresults(sprintf('betacomponents%dmon',OPT_BETAFREQ));
+    else
+        beta = loadresults(sprintf('betacomponents%dm',OPT_BETAFREQ));
+    end
 catch
     grid        = [0 11/24:OPT_BETAFREQ/(60*24):16/24];
     half_second = 0.5/(60*60*24);
     grid        = grid + half_second;
-    beta        = estimateBetaComponents(OPT_BETAFREQ,true,false,grid);
+    beta        = estimateBetaComponents(OPT_BETAFREQ,OPT_USEON,false,grid);
 end
 [~,ia,ib] = intersectIdDate(beta.Permno, beta.Date,master.Permno, master.Date);
 beta      = beta(ia,:);
@@ -85,7 +89,6 @@ isMicro     = isMicro{pos,2:end};
 reton = loadresults('reton');
 
 % Beta components
-beta              = loadresults(sprintf('beta%dminon',OPT_BETAFREQ));
 num               = myunstack(beta,'Num');
 den               = myunstack(beta,'Den');
 beta              = cat(3,num{:,2:end},den{:,2:end});
@@ -96,7 +99,7 @@ clear den num
 ff = loadresults('F-F_Research_Data_5_Factors_2x3_daily_TXT');
 ff = ff(ismember(ff.Date, unique(dsf.Date)),:);
 
-save results\alldata_betaonly master date permno ret isMicro reton beta ff
+save(sprintf('results\\alldata_beta%d',OPT_BETAFREQ), 'master', 'date', 'permno', 'ret', 'isMicro', 'reton', 'beta', 'ff')
 %% Illiquidity
 myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
 load('results\alldata_betaonly','permno','date')
