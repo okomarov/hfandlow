@@ -1,17 +1,17 @@
 %% Options
 OPT_USEETF = false;
 
+OPT_FREQ = 75;
+
 OPT_LAG    = 1;
 OPT_PTF_UN = 5;
 OPT_PTF_DB = 3;
 
-OPT_BLOCKS_DEC = {1 6 2 1}';
-
 OPT_SHRINK = [0.4,0.6,0.6,0.6];
-% OPT_SHRINK = [0.4,0.5,0.5,0.5];
 
+OPT_BLOCKS_DEC = {1 6 2 1}';
 %% Data
-load('results\alldata_betaonly')
+load(sprintf('results\\alldata_beta%d',OPT_FREQ))
 
 if OPT_USEETF
     etf           = reton(reton.Permno == 84398,:);
@@ -72,20 +72,17 @@ allsig           = cat(3,signals_LF,signals_HF);
 correlations     = corrxs(allsig(:,:,order),snames(order));
 correlations_dec = corrxs(allsig(idec,:,order),snames(order));
 
-% % Plot
-% figure
-% X    = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
-% YLIM = [0,6];
-% for ii = 1:nsig*2
-%     subplot(nsig,2,ii)
-%     inan      = isnan(ptfret{order(ii)});
-%     lvl       = cumprod(1+nan2zero(ptfret{order(ii)}));
-%     lvl(inan) = NaN;
-%     plot([min(dt(idec)),min(dt(idec))],YLIM,'-.','Color',[0.85,0.85,0.85],'LineWidth',1.5)
-%     hold on
-%     plot(dt,lvl)
-%     set(gca, 'TickLabelInterpreter','latex','Ylim',YLIM,'YTick',0:2:YLIM(2),'Layer','Top')
-% end
+% Plot
+figure
+X    = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
+for ii = 1:nsig*2
+    subplot(nsig,2,ii)
+    inan      = isnan(ptfret{order(ii)}(idec,:));
+    lvl       = cumprod(1+nan2zero(ptfret{order(ii)}(idec,:)));
+    lvl(inan) = NaN;
+    plot(dt(idec),lvl)
+    set(gca, 'TickLabelInterpreter','latex','Layer','Top')
+end
 
 % Desc stats
 desc   = cellfun(@(x) stratstats(dt,x*100,'Frequency','m','IsPercentageReturn',true), ptfret,'un',0);
@@ -102,11 +99,11 @@ catfun = @(sig,stats) [stats; array2table(nanmean(sig(idec,:)),'VariableNames',{
 desc2  = cellfun(catfun,avgsig,desc2,'un',0);
 out    = cell2mat(cellfun(@(x) x{:,:}, desc2,'un',0));
 %% Tests
-[coeff,se,tratio,pval]     = regressHighOnLow(ptfret(:,2),ptfret(:,1));
-[coeff2,se2,tratio2,pval2] = regressHighOnLow(ptfret(:,2),ptfret(:,1),idec);
-
 [~,pValST,Zjk]   = cellfun(@(high,low) sharpetest(high(:,end), low(:,end)), ptfret(:,2),ptfret(:,1));
 [~,pValST2,Zjk2] = cellfun(@(high,low) sharpetest(high(idec,end), low(idec,end)), ptfret(:,2),ptfret(:,1));
+
+[coeff,se,tratio,pval]     = regressHighOnLow(ptfret(:,2),ptfret(:,1));
+[coeff2,se2,tratio2,pval2] = regressHighOnLow(ptfret(:,2),ptfret(:,1),idec);
 
 [se3, pval3] = cellfun(@(high,low) sharpeHAC([high(:,end), low(:,end)]), ptfret(:,2),ptfret(:,1));
 [se4, pval4] = cellfun(@(high,low) sharpeHAC([high(idec,end), low(idec,end)]), ptfret(:,2),ptfret(:,1));
