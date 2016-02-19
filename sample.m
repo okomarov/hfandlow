@@ -1,6 +1,6 @@
 
 OPT_LAGDAY   = 1;
-OPT_BETAFREQ = 75;
+OPT_BETAFREQ = 5;
 OPT_USEON    = true;
 %% Select data
 % Index data
@@ -23,7 +23,8 @@ master = master(~idx,:);
 % Minobs
 res         = loadresults('countBadPrices','..\results');
 isEnoughObs = (res.Ntot - res.Nbadtot) >= 79;
-[~,pos]     = ismembIdDate(master.Id, master.Date, res.Id, res.Date);
+res         = addPermno(res);
+[~,pos]     = ismembIdDate(master.Permno, master.Date, res.Permno, res.Date);
 isEnoughObs = isEnoughObs(pos,:);
 isEnoughObs = [false(OPT_LAGDAY,1); isEnoughObs(1:end-OPT_LAGDAY)];
 master      = master(isEnoughObs,:);
@@ -41,10 +42,14 @@ try
         beta = loadresults(sprintf('betacomponents%dm',OPT_BETAFREQ));
     end
 catch
-    grid        = [0 11/24:OPT_BETAFREQ/(60*24):16/24];
-    half_second = 0.5/(60*60*24);
-    grid        = grid + half_second;
-    beta        = estimateBetaComponents(OPT_BETAFREQ,OPT_USEON,false,grid);
+    if OPT_BETAFREQ ~= 5
+        grid        = [0 11/24:OPT_BETAFREQ/(60*24):16/24];
+        half_second = 0.5/(60*60*24);
+        grid        = grid + half_second;
+    else
+        grid = [];
+    end
+    beta = estimateBetaComponents(OPT_BETAFREQ,OPT_USEON,false,grid);
 end
 [~,ia,ib] = intersectIdDate(beta.Permno, beta.Date,master.Permno, master.Date);
 beta      = beta(ia,:);
@@ -102,7 +107,7 @@ ff = ff(ismember(ff.Date, unique(dsf.Date)),:);
 save(sprintf('results\\alldata_beta%d',OPT_BETAFREQ), 'master', 'date', 'permno', 'ret', 'isMicro', 'reton', 'beta', 'ff')
 %% Illiquidity
 myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
-load('results\alldata_betaonly','permno','date')
+load('results\alldata_beta75','permno','date')
 
 dsf = loadresults('dsfquery','..\results');
 idx = ismember(dsf.Permno, xstr2num(permno));
