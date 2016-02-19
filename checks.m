@@ -58,7 +58,7 @@ close all
 % Justifying noise in beta estimates until decimalization
 myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
 
-load('results\20160118_1949_betacomponents5m.mat')
+load('results\20160215_2237_betacomponents5m.mat')
 res      = res(issp500member(res),:);
 res.Beta = res.Num./res.Den;
 res      = getMktCap(res,1);
@@ -100,6 +100,52 @@ uistack(h,'bottom')
 set(h,'FaceAlpha',1,'FaceColor',[0.9,0.9,0.9])
 set(gca, 'TickLabelInterpreter','latex','Layer','Top','Ylim',[-0.4,1.6])
 print('betaQuintilesCap','-depsc','-r200')
+%% Count 0 returns
+
+testname = 'countnullrets';
+try
+    counts = loadresults(testname);
+catch
+    path2data = '..\data\TAQ\sampled\5min\nobad_vw';
+    counts    = AnalyzeHflow(testname,[],[], path2data,[],8);
+end
+
+counts = counts(~isprobdate(counts.Date),:);
+
+% Monthly sampling
+[~,pos] = unique(counts.Date/100,'last');
+dates   = counts.Date(pos);
+dt      = yyyymmdd2datetime(dates);
+
+% Only sp500 members
+isp500    = issp500member(counts);
+[~,subs]  = ismember(counts.Date(isp500)/100,dates/100);
+avgcounts = accumarray(subs, counts.Nullrets(isp500),[],@mean);
+
+figure
+set(gcf, 'Position', get(gcf,'Position').*[1,1,1,0.42],'PaperPositionMode','auto')
+plot(dt, avgcounts)
+h = recessionplot('recessions',datenum(reshape(dt([1,48,92,120]),2,2)'));
+uistack(h,'bottom')
+set(h,'FaceAlpha',1,'FaceColor',[0.9,0.9,0.9])
+set(gca, 'TickLabelInterpreter','latex','Layer','Top','Ylim',[0,80])
+print('countNullConst','-depsc','-r200')
+
+% Spyders
+spy = sortrows(counts(counts.Permno == 84398,{'Date','Nullrets'}),'Date');
+
+[~,subs]  = ismember(spy.Date/100,dates/100);
+avgcounts = accumarray(subs, spy.Nullrets,[],@mean);
+avgcounts(1) = NaN;
+
+figure
+set(gcf, 'Position', get(gcf,'Position').*[1,1,1,0.42],'PaperPositionMode','auto')
+plot(dt, avgcounts)
+h = recessionplot('recessions',datenum(reshape(dt([1,48,92,120]),2,2)'));
+uistack(h,'bottom')
+set(h,'FaceAlpha',1,'FaceColor',[0.9,0.9,0.9])
+set(gca, 'TickLabelInterpreter','latex','Layer','Top','Ylim',[0,80])
+print('countNullSpy','-depsc','-r200')
 
 %% Trends in SP500 betas
 myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
