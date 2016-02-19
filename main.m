@@ -5,7 +5,7 @@ OPT_FREQ = 75;
 
 OPT_LAG    = 1;
 OPT_PTF_UN = 5;
-OPT_PTF_DB = 3;
+OPT_PTF_DB = 5;
 
 OPT_SHRINK = [0.4,0.6,0.6,0.6];
 
@@ -99,8 +99,8 @@ catfun = @(sig,stats) [stats; array2table(nanmean(sig(idec,:)),'VariableNames',{
 desc2  = cellfun(catfun,avgsig,desc2,'un',0);
 out    = cell2mat(cellfun(@(x) x{:,:}, desc2,'un',0));
 %% Tests
-[~,pValST,Zjk]   = cellfun(@(high,low) sharpetest(high(:,end), low(:,end)), ptfret(:,2),ptfret(:,1));
-[~,pValST2,Zjk2] = cellfun(@(high,low) sharpetest(high(idec,end), low(idec,end)), ptfret(:,2),ptfret(:,1));
+[~,pValST,Zjk]   = cellfun(@(high,low,M) sharpetest(high(:,end)   , low(:,end)   ,M,[],'both'), ptfret(:,2),ptfret(:,1), {1,3,6,12});
+[~,pValST2,Zjk2] = cellfun(@(high,low,M) sharpetest(high(idec,end), low(idec,end),M,[],'both'), ptfret(:,2),ptfret(:,1), {1,3,6,12});
 
 [coeff,se,tratio,pval]     = regressHighOnLow(ptfret(:,2),ptfret(:,1));
 [coeff2,se2,tratio2,pval2] = regressHighOnLow(ptfret(:,2),ptfret(:,1),idec);
@@ -145,7 +145,43 @@ for ii = 1:nsig
         SR{ii}(jj,2) = s.SR(end);
     end
 end
+%% Mkt cap
+cap   = getMktCap(xstr2num(permno),[],1);
+idx   = ismember(cap.Date, date);
+cap   = cap(idx,:);
 
+[~,pos] = unique(cap.Date/100,'last');
+cap     = cap{pos,2:end};
+cap     = cap(1:end-OPT_LAG,:,:);
+
+SR = repmat({NaN(OPT_PTF_DB,2)},nsig,1);
+
+for ii = 1:nsig
+    c                   = cap;
+    c(inan_sig(:,:,ii)) = NaN;
+    [bins,counts]       = binSignal(c,'PortfolioNumber',OPT_PTF_DB);
+
+    for jj = 1:OPT_PTF_DB
+        iCap = bins == jj;
+
+        % Low freq
+        signal                = signals_LF(:,:,ii);
+        signal(~iCap)         = NaN;
+        [tmpret,~,~,~,tmpsig] = bab(hpr,signal,rf);
+
+        s = stratstats(dt(idec), tmpret(idec,:)*100,'Frequency','m','IsPercentageReturn',true);
+
+        SR{ii}(jj,1) = s.SR(end);
+
+        % High freq
+        signal                = signals_HF(:,:,ii);
+        signal(~iCap)         = NaN;
+        [tmpret,~,~,~,tmpsig] = bab(hpr,signal,rf);
+
+        s            = stratstats(dt(idec), tmpret(idec,:)*100,'Frequency','m','IsPercentageReturn',true);
+        SR{ii}(jj,2) = s.SR(end);
+    end
+end
 %% Risk-adjustment
 factors = loadresults('RAfactors');
 factors = factors(ismember(factors.Date, mdate),:);
