@@ -5,7 +5,6 @@ function res = estimateOverIntraCloseRet
 
 % Load Permno - Date pairs
 mst = loadresults('masterPermno','..\results');
-mst = addPermno(mst);
 
 % Open-to-close returns
 fl        = loadresults('sampleFirstLast','..\results');
