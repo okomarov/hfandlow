@@ -35,10 +35,11 @@ end
 
 % Unstack betas
 if ~keeplong
+    betas.Beta = betas.Num./betas.Den;
     betas = unstack(betas(:,{'Date','Permno','Beta'}), 'Beta','Permno');
     betas = sortrows(betas,'Date');
 end
 
 % Convert to double
-betas = tbextend.varfun(@double, betas, 'RenameVariables', false);
+betas = varfun(@double, betas, 'RenameVariables', false);
 end

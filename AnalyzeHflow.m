@@ -58,7 +58,7 @@ end
 
 function res = betacomponents(s,cached, grid)
 % DO NOT RELY on local id!
-
+nmst   = size(s.mst,1);
 spdays = cached{2};
 spyret = cached{1};
 useon  = numel(cached) == 4;
@@ -68,7 +68,7 @@ end
 
 % Dates and returns
 dates = s.data.Datetime;
-ret   = [NaN; diff(log(s.data.Price))];
+ret   = [NaN; diff(log(double(s.data.Price)))];
 idx   = [false; diff(rem(dates,1)) >= 0];
 if useon
     [~,pos]   = ismembIdDate(s.mst.Permno, s.mst.Date, onret.Permno, onret.Date);
@@ -91,10 +91,11 @@ if ~isempty(grid)
     if ~issorted(s.mst.From)
         error('Unsorted mst!');
     end
-    nmst       = size(s.mst,1);
     [subs,id]  = ndgrid(subs,1:nmst);
     [~,~,subs] = unique([id(:),subs(:)],'rows');
     ret        = accumarray(subs, nan2zero(ret)+1,[],@(x) prod(x)-1);
+else
+    spyret = cellfun(@(x) x(:,2),spyret,'un',0);
 end
 
 % Use a NaN when we don't have SPY returns
@@ -114,6 +115,9 @@ ikeep   = ~isnan(prodret);
 res     = s.mst(:,{'Permno','Date'});
 res.Num = accumarray(subsID(ikeep), prodret(ikeep),[],[],NaN);
 res.Den = accumarray(subsID(ikeep), spret(ikeep).^2,[],[],NaN);
+
+% Drop null 
+res = res(res.Permno ~= 0,:);
 end
 
 function res = skewcomponents(s, cached)
@@ -185,7 +189,7 @@ end
 
 function res = countnullrets(s,cached)
 res          = s.mst(:,{'Id','Permno','Date'});
-idx          = mcolon(s.mst.From,1,s.mst.To);
+idx          = mcolonint(s.mst.From,s.mst.To);
 subs         = RunLength(1:size(s.mst,1),s.mst.To-s.mst.From+1);
 res.Nullrets = accumarray(subs(:), s.data.Price(idx),[],@(x) nnz(x(2:end)./x(1:end-1)==1));
 end

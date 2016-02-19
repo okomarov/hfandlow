@@ -10,7 +10,7 @@ if nargin < 6 || isempty(issp),     issp     = true;   end
 if nargin < 7 || isempty(iscs),     iscs     = true;   end
 
 % Get Betas
-betas = getBetas(lookback, freq, useon, useproxy, issp, iscs);
+betas = getBetas(freq, useon, useproxy, issp, iscs);
 
 % Filter out problematic dates
 betas = betas(~isprobdate(betas.Date),:);

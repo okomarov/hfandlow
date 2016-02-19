@@ -47,12 +47,12 @@ catch
     %       Date - Permno mapping to Date - Permno/Id
     if useon
         fprintf('%s: adding overnight returns to all other series.\n', mfilename)
-        reton.File      = zeros(size(reton,1),1,'uint16');
-        [idx,pos]       = ismembIdDate(reton.Id,reton.Date, mst.Id, mst.Date);
-        reton.File(idx) = mst.File(pos(idx));
-        reton           = reton(idx,{'Permno','Date','RetCO','File'});
-        cached          = [cached,...
-                           accumarray(reton.File,(1:size(reton))',[],@(x) {reton(x,{'Permno','Date','RetCO'})})];
+        reton.File        = zeros(size(reton,1),1,'uint16');
+        [idx,pos]         = ismembIdDate(reton.Id,reton.Date, mst.Id, mst.Date);
+        reton.File(idx,1) = mst.File(pos(idx));
+        reton             = reton(idx,{'Permno','Date','RetCO','File'});
+        cached            = [cached,...
+                           cache2cell(reton(:,{'Permno','Date','RetCO'}), reton.File)];
     end
     clear mst reton pos idx
 
@@ -84,7 +84,7 @@ else
     mktret = getSpy(freq);
 end
 
-mktret = [mktret.Datetime, [NaN; diff(log(mktret.Price))]];
+mktret = [mktret.Datetime, [NaN; diff(double(log(mktret.Price)))]];
 
 % Deal with overnight
 iNotOn = [false; diff(rem(mktret(:,1),1)) >= 0];
@@ -116,10 +116,9 @@ spret           = cache2cell(spret, subs);
 % Replicate to match master
 unMstDates = accumarray(mst.File, mst.Date,[],@(x){yyyymmdd2serial(unique(x))});
 for ii = 1:nfiles
-    [~,pos]      = ismember(unMstDates{ii}, spdays);
-    nnzero       = pos ~= 0;
+    [idx,pos]    = ismember(unMstDates{ii}, spdays);
     isp          = ismember(spdays, unMstDates{ii});
-    cached(ii,:) = {spret(isp,:) spdays(pos(nnzero))};
+    cached(ii,:) = {spret(isp,:) spdays(pos(idx))};
 end
 end
 

@@ -547,7 +547,7 @@ testname = 'countnullrets';
 try
     counts = loadresults(testname);
 catch
-    path2data = '.\data\TAQ\sampled';
+    path2data = '.\data\TAQ\sampled\';
     counts    = Analyze(testname,[],[], fullfile(path2data,'S5m_*.mat'));
 end
 
@@ -682,7 +682,7 @@ sp500only  = true;
 commononly = true;
 
 % Get Betas
-[Betas, unids] = getBetas(sp500only, commononly);
+[Betas, unids] = getBetas(5,true,false,sp500only, commononly,false);
 
 % Filter out problematic dates
 Betas = Betas(~isprobdate(Betas.Date),:);
