@@ -134,3 +134,15 @@ end
 % illiq = log(out);
 illiq = out;
 save results\illiq illiq
+%% Mkt cap
+
+load('results\alldata_beta75','permno','date', 'master')
+
+% Get mkt cap
+cap   = getMktCap(master,[],1);
+idx   = ismember(cap.Date, date);
+cap   = cap(idx,:);
+
+[~,pos] = unique(cap.Date/100,'last');
+cap     = cap{pos,2:end};
+
