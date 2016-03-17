@@ -6,7 +6,8 @@ w    = [-min(z-zbar,0)/sum(abs(zbar-z))*2, max(z-zbar,0)/sum(abs(zbar-z))*2];
 
 figure
 set(gcf, 'Position', get(gcf,'Position').*[1,1,1,0.62],'PaperPositionMode','auto')
-stem(z(:), reshape(w,N,[]), 'filled')
+h = stem(z(:), reshape(w,N,[]), 'filled');
+set(h(2),'Marker','diamond')
 xticklabels = get(gca,'XTickLabel');
 set(gca,'TickLabelInterpreter','latex','Xlim',[0,N+1],'XTickLabel',[' '; xticklabels;' '])
 print('BabWeightExample','-depsc','-r200')
@@ -94,7 +95,10 @@ print('betaQuintiles','-depsc','-r200')
 
 figure
 set(gcf, 'Position', get(gcf,'Position').*[1,1,1,0.42],'PaperPositionMode','auto')
-plot(dt, betaMeanByCap(:,[2,4,end]))
+h = plot(dt, betaMeanByCap(:,[2,4,end]));
+set(h,{'Color'},{[0    0.4470    0.7410]
+               [0.9290    0.6940    0.1250]
+               [0.4660    0.6740    0.1880]})
 h = recessionplot('recessions',datenum(reshape(dt([1,48,92,120]),2,2)'));
 uistack(h,'bottom')
 set(h,'FaceAlpha',1,'FaceColor',[0.9,0.9,0.9])
