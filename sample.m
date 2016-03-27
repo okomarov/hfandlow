@@ -1,6 +1,6 @@
 
 OPT_LAGDAY   = 1;
-OPT_BETAFREQ = 5;
+OPT_BETAFREQ = 75;
 OPT_USEON    = true;
 %% Select data
 % Index data
