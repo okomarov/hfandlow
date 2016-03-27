@@ -3,6 +3,8 @@ function corrmat = corrxs(panel, names)
 [nobs,~,nlay]  = size(panel);
 if nargin < 2
     names = matlab.internal.table.dfltVarNames(1:nlay);
+elseif nlay ~= numel(names)
+    error('corrxs:invalidNumNames','NAMES should have one element for each layer in PANEL.')
 end
 [pears, spear] = deal(zeros(nobs,nlay,nlay)); 
 inan           = any(isnan(panel),3);
