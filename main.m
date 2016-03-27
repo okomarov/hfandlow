@@ -8,8 +8,10 @@ OPT_PTF_UN = 5;
 OPT_PTF_DB = 5;
 
 OPT_SHRINK = [0.4,0.6,0.6,0.6];
+% OPT_SHRINK = [0.8,0.8,0.8,0.8];
 
-OPT_BLOCKS_DEC = {1 6 2 1}';
+OPT_BLOCKS_DEC = {1 6 2 1}'; % whole horizon
+% OPT_BLOCKS_DEC = {1 8 2 1}';
 %% Data
 load(sprintf('results\\alldata_beta%d',OPT_FREQ))
 
@@ -99,20 +101,23 @@ catfun = @(sig,stats) [stats; array2table(nanmean(sig(idec,:)),'VariableNames',{
 desc2  = cellfun(catfun,avgsig,desc2,'un',0);
 out    = cell2mat(cellfun(@(x) x{:,:}, desc2,'un',0));
 %% Tests
-[~,pValST,Zjk]   = cellfun(@(high,low,M) sharpetest(high(:,end)   , low(:,end)   ,M,[],'both'), ptfret(:,2),ptfret(:,1), {1,3,6,12});
-[~,pValST2,Zjk2] = cellfun(@(high,low,M) sharpetest(high(idec,end), low(idec,end),M,[],'both'), ptfret(:,2),ptfret(:,1), {1,3,6,12});
-
-[coeff,se,tratio,pval]     = regressHighOnLow(ptfret(:,2),ptfret(:,1));
-[coeff2,se2,tratio2,pval2] = regressHighOnLow(ptfret(:,2),ptfret(:,1),idec);
-
-[se3, pval3] = cellfun(@(high,low) sharpeHAC([high(:,end), low(:,end)]), ptfret(:,2),ptfret(:,1));
-[se4, pval4] = cellfun(@(high,low) sharpeHAC([high(idec,end), low(idec,end)]), ptfret(:,2),ptfret(:,1));
-
+[~,pValST,Zjk]   = cellfun(@(high,low,M) sharpetest(high(:,end)   , low(:,end)   ,M,[],'both'), ptfret(:,2),ptfret(:,1), {1,3,6,12}');
+[~,pValST2,Zjk2] = cellfun(@(high,low,M) sharpetest(high(idec,end), low(idec,end),M,[],'both'), ptfret(:,2),ptfret(:,1), {1,3,6,12}');
+% 
+% [coeff,se,tratio,pval]     = regressHighOnLow(ptfret(:,2),ptfret(:,1));
+% [coeff2,se2,tratio2,pval2] = regressHighOnLow(ptfret(:,2),ptfret(:,1),idec);
+% 
+% [se3, pval3] = cellfun(@(high,low) sharpeHAC([high(:,end), low(:,end)]), ptfret(:,2),ptfret(:,1));
+% [se4, pval4] = cellfun(@(high,low) sharpeHAC([high(idec,end), low(idec,end)]), ptfret(:,2),ptfret(:,1));
+% 
 rng default
-blocks = cellfun(@(high,low) blockSizeCalibrate([high(:,end), low(:,end)]), ptfret(:,2),ptfret(:,1));
+% OPT_BLOCKS_DEC = cellfun(@(high,low) blockSizeCalibrate([high(:,end), low(:,end)]), ptfret(:,2),ptfret(:,1));
 % OPT_BLOCKS_DEC = cellfun(@(high,low) blockSizeCalibrate([high(idec,end), low(idec,end)]), ptfret(:,2),ptfret(:,1));
+rng default
+pval5 = cellfun(@(high,low,b) bootInference([high(idec,end), low(idec,end)],b,[],[],0), ptfret(:,2),ptfret(:,1),{2 2 2 2}');
+rng default
+pval6 = cellfun(@(high,low,b) bootInference([high(~isnan(high(:,end)),end), low(~isnan(low(:,end)),end)],b,[],[],0), ptfret(:,2),ptfret(:,1),{2 2 2 2}');
 
-[se5, pval5] = cellfun(@(high,low,b) bootInference([high(idec,end), low(idec,end)],b,[],[],0), ptfret(:,2),ptfret(:,1),OPT_BLOCKS_DEC);
 %% Double-sorts
 illiq = loadresults('illiq');
 illiq = illiq(1:end-OPT_LAG,:,:);
