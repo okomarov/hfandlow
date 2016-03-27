@@ -104,12 +104,13 @@ out    = cell2mat(cellfun(@(x) x{:,:}, desc2,'un',0));
 [~,pValST,Zjk]   = cellfun(@(high,low,M) sharpetest(high(:,end)   , low(:,end)   ,M,[],'both'), ptfret(:,2),ptfret(:,1), {1,3,6,12}');
 [~,pValST2,Zjk2] = cellfun(@(high,low,M) sharpetest(high(idec,end), low(idec,end),M,[],'both'), ptfret(:,2),ptfret(:,1), {1,3,6,12}');
 % 
-% [coeff,se,tratio,pval]     = regressHighOnLow(ptfret(:,2),ptfret(:,1));
-% [coeff2,se2,tratio2,pval2] = regressHighOnLow(ptfret(:,2),ptfret(:,1),idec);
-% 
+% [coeff,se,tratio,pval]     = cellfun(@(high,low) regressHighOnLow(high(:,end), low(:,end)), ptfret(:,2),ptfret(:,1),'un',0);
+% [coeff2,se2,tratio2,pval2] = cellfun(@(high,low) regressHighOnLow(high(idec,end), low(idec,end)), ptfret(:,2),ptfret(:,1),'un',0);
+
 % [se3, pval3] = cellfun(@(high,low) sharpeHAC([high(:,end), low(:,end)]), ptfret(:,2),ptfret(:,1));
 % [se4, pval4] = cellfun(@(high,low) sharpeHAC([high(idec,end), low(idec,end)]), ptfret(:,2),ptfret(:,1));
-% 
+
+% Ledoit, Wolf (2008) boot-strapped test
 rng default
 % OPT_BLOCKS_DEC = cellfun(@(high,low) blockSizeCalibrate([high(:,end), low(:,end)]), ptfret(:,2),ptfret(:,1));
 % OPT_BLOCKS_DEC = cellfun(@(high,low) blockSizeCalibrate([high(idec,end), low(idec,end)]), ptfret(:,2),ptfret(:,1));
