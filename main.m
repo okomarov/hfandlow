@@ -54,18 +54,17 @@ inan_sig   = inan_sig(1:end-OPT_LAG,:,:);
 hpr   = hpr(1+OPT_LAG:end,:);
 rf    = rf(1+OPT_LAG:end,:);
 mdate = mdate(1+OPT_LAG:end,:);
+idec  = mdate > 200104;
 
 % Filter micro
 hpr(isMicro) = NaN;
 %% BAB ret
-[ptfret, avgsig] = deal(cell(nsig,2));
+[ptfret, avgsig,wl,wh] = deal(cell(nsig,2));
 for ii = 1:nsig
-    [ptfret{ii,1},~,~,~,avgsig{ii,1}] = bab(hpr,signals_LF(:,:,ii),rf);
-    [ptfret{ii,2},~,~,~,avgsig{ii,2}] = bab(hpr,signals_HF(:,:,ii),rf);
+    [ptfret{ii,1},~,wl{ii,1},wh{ii,1},avgsig{ii,1}] = bab(hpr,signals_LF(:,:,ii),rf);
+    [ptfret{ii,2},~,wl{ii,2},wh{ii,2},avgsig{ii,2}] = bab(hpr,signals_HF(:,:,ii),rf);
 end
 %% Desc stats
-dt   = serial2datetime(datenum(1993,(1:size(signals_LF,1))+2,1)-1);
-idec = dt >= yyyymmdd2datetime(20010501);
 
 % Correlation
 snames           = {'babm','babq','babs','baby','rbabm','rbabq','rbabs','rbaby'};
@@ -76,7 +75,8 @@ correlations_dec = corrxs(allsig(idec,:,order),snames(order));
 
 % Plot
 figure
-X    = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
+dt = serial2datetime(datenum(1993,(1:size(signals_LF,1))+2,1)-1);
+X  = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
 for ii = 1:nsig*2
     subplot(nsig,2,ii)
     inan      = isnan(ptfret{order(ii)}(idec,:));
@@ -119,7 +119,7 @@ pval5 = cellfun(@(high,low,b) bootInference([high(idec,end), low(idec,end)],b,[]
 rng default
 pval6 = cellfun(@(high,low,b) bootInference([high(~isnan(high(:,end)),end), low(~isnan(low(:,end)),end)],b,[],[],0), ptfret(:,2),ptfret(:,1),{2 2 2 2}');
 
-%% Double-sorts
+%% Conditioning: illiquidity
 illiq = loadresults('illiq');
 illiq = illiq(1:end-OPT_LAG,:,:);
 
@@ -151,7 +151,7 @@ for ii = 1:nsig
         SR{ii}(jj,2) = s.SR(end);
     end
 end
-%% Mkt cap
+%% Conditioning: mkt cap
 cap   = getMktCap(xstr2num(permno),[],1);
 idx   = ismember(cap.Date, date);
 cap   = cap(idx,:);
@@ -159,6 +159,10 @@ cap   = cap(idx,:);
 [~,pos] = unique(cap.Date/100,'last');
 cap     = cap{pos,2:end};
 cap     = cap(1:end-OPT_LAG,:,:);
+
+% Check correlation with signals
+% Note: illiquidity is -90% corr with log(size)
+corrxs(cat(3,allsig(idec,:,order),illiq(idec,:), log(cap(idec,:))),[snames(order), 'illiq','cap']);
 
 SR = repmat({NaN(OPT_PTF_DB,2)},nsig,1);
 
@@ -188,6 +192,54 @@ for ii = 1:nsig
         SR{ii}(jj,2) = s.SR(end);
     end
 end
+celldisp(SR)
 %% Risk-adjustment
 factors = loadresults('RAfactors');
 factors = factors(ismember(factors.Date, mdate),:);
+%% Profitability
+[idx,msubs] = ismember(date/100,mdate);
+msubs = msubs(idx);
+
+% Apply filters inherited from returns and exclude hpr NaNs
+inan = isnan(hpr);
+hprd = ret(idx,:);
+hprd(inan(msubs,:)) = NaN;
+
+% Loop for all signals
+[num,n] = deal(zeros(opt.Ptf_num_univ,20,nsignals));
+for jj = 1:nsig
+    rh     = nansum(hprd .* wh{jj,1}(msubs,:),2);
+    rl     = nansum(hprd .* wl{jj,1}(msubs,:),2);
+    bh     = nansum(signals_LF(:,:,jj) .* wh{jj,1},2);
+    bl     = nansum(signals_LF(:,:,jj) .* wl{jj,1},2);
+    ptfret = (rl-ff.RF(idx)/100)./bl(msubs,:) - (rh-ff.RF(idx)/100)./bh(msubs,:);
+    
+	rh     = nansum(hprd .* wh{jj,2}(msubs,:),2);
+    rl     = nansum(hprd .* wl{jj,2}(msubs,:),2);
+    bh      = nansum(signals_HF(:,:,jj) .* wh{jj,2},2);
+    bl      = nansum(signals_HF(:,:,jj) .* wl{jj,2},2);
+    ptfret  = [ptfret, (rl-ff.RF(idx)/100)./bl(msubs,:) - (rh-ff.RF(idx)/100)./bh(msubs,:)];
+    
+    ptfret(isinf(ptfret)) = NaN;
+    figure
+    plot(cumprod(nan2zero(ptfret)+1))
+%     
+%     % Series to keep
+%     ikeep = ~inan & bin ~= 0;
+%     
+%     for ii = 1:max(msubs)
+%         imonth   = msubs == ii;
+%         retslice = ret(imonth, ikeep(ii,:));
+%         if ~isempty(retslice)
+%             % Accumulation indexes
+%             [row,col] = ndgrid(1:size(retslice,1), bin(ii, ikeep(ii,:)));
+%             subs      = [row(:), col(:)];
+%         
+%             % Mean as S(sum)/S(n)
+%             tmp         = accumarray(subs, retslice(:));
+%             num(:,:,jj) = num(:,:,jj) + tmp([1:10,end-9:end],:)';
+%             tmp         = accumarray(subs, 1);
+%             n(:,:,jj)   = n(:,:,jj) + tmp([1:10,end-9:end],:)';
+%         end
+%     end
+end

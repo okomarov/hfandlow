@@ -126,7 +126,7 @@ illiq            = myunstack(dsf,'Amihud');
 idx   = ismember(illiq.Date, date);
 illiq = illiq(idx,:);
 
-% End-of-month average
+% End-of-month rolling average of a year of daily observations
 [mdate,pos,midx] = unique(illiq.Date/100,'last');
 illiq            = illiq{:,2:end};
 
