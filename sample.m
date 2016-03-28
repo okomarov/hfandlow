@@ -21,18 +21,18 @@ idx    = isprobdate(master.Date);
 master = master(~idx,:);
 
 % Minobs
-res         = loadresults('countBadPrices','..\results');
-isEnoughObs = (res.Ntot - res.Nbadtot) >= 79;
-res         = addPermno(res);
-[~,pos]     = ismembIdDate(master.Permno, master.Date, res.Permno, res.Date);
-isEnoughObs = isEnoughObs(pos,:);
-isEnoughObs = [false(OPT_LAGDAY,1); isEnoughObs(1:end-OPT_LAGDAY)];
-master      = master(isEnoughObs,:);
+res               = loadresults('countBadPrices','..\results');
+isEnoughObs       = (res.Ntot - res.Nbadtot) >= 79;
+res               = addPermno(res);
+[~,pos]           = ismembIdDate(master.Permno, master.Date, res.Permno, res.Date);
+isEnoughObs       = isEnoughObs(pos,:);
+[~,idx,pos]       = lagpanel(master(:,{'Date','Permno'}),'Permno');
+isEnoughObs(~idx) = isEnoughObs(pos);
+master            = master(isEnoughObs,:);
 
 % % Count
-% tmp       = sortrows(unstack(master(:,{'Date','Permno','File'}), 'File','Permno'),'Date');
-% tmp       = tmp{:,2:end};
-% count_all = sum(tmp~=0,2);
+% [~,~,subs] = unique(master.Date);
+% accumarray(subs,1)
 
 % Beta components at 75, i.e. return from open to 11:00, 12:15, 13:30, 14:45, 16:00
 try
@@ -133,21 +133,9 @@ illiq            = illiq{:,2:end};
 nmonths = numel(mdate);
 out     = NaN(nmonths,numel(permno));
 for ii = 12:nmonths
-    idx = ismember(midx, ii-12+1:ii);
+    idx       = ismember(midx, ii-12+1:ii);
     out(ii,:) = nanmean(illiq(idx,:),1);
 end
 % illiq = log(out);
 illiq = out;
 save results\illiq illiq
-%% Mkt cap
-
-load('results\alldata_beta75','permno','date', 'master')
-
-% Get mkt cap
-cap   = getMktCap(master,[],1);
-idx   = ismember(cap.Date, date);
-cap   = cap(idx,:);
-
-[~,pos] = unique(cap.Date/100,'last');
-cap     = cap{pos,2:end};
-
