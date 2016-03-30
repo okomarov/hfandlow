@@ -3,14 +3,19 @@
 addpath 'D:\TAQ\HF\hfandlow\utils\MFE'
 
 fprintf('Checking one random beta.\n')
-beta   = getBetas(1,5,true,false,false,true,true);
-record = beta(randsample(size(beta,1),1),:);
+beta   = getBetas(75,true,false,false,true,true);
 
+record = beta(randsample(size(beta,1),1),:);
 date   = record.Date;
 permno = record.Permno;
+
+% permno = 91205;
+% date = 20100525;
 % record = beta(beta.Permno == permno & beta.Date == date,:);
 
+grid = [9.5/24, 9.75/24:75/(60*24):16/24]'
 grid = (9.5/24:5/(60*24):16/24)';
+
 ret  = loadresults('return_intraday_overnight');
 
 %%%%%%%%%%%%%%%%%%
