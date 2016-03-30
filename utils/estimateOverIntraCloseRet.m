@@ -1,10 +1,19 @@
-function res = estimateOverIntraCloseRet
-% Calulate overnight return from CRSP's close-to-close return and
-% TAQ's open-to-close (intraday) return.
-
+function res = estimateOverIntraCloseRet()
+% Calulate overnight return for US equities
+% 
+%   The overnight return is defined as CRSP's close-to-close 
+%   return minus TAQ's open-to-close (intraday) return.
+%
+%   NOTES:
+%       - RetCO is in logs
+%       - RetCC is the CRSP HPR and RetOC is TAQ's close/open-1
+%       - only available for TAQ issues that map to a non-null Permno
+%
+% See also: MAPPERMNO2MASTER
 
 % Load Permno - Date pairs
 mst = loadresults('masterPermno','..\results');
+mst = mst(mst.Permno ~= 0,:);
 
 % Open-to-close returns
 fl        = loadresults('sampleFirstLast','..\results');
