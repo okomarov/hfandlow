@@ -51,6 +51,9 @@ catch
     end
     beta = estimateBetaComponents(OPT_BETAFREQ,OPT_USEON,false,grid);
 end
+% Drop january, no beta spyders, hence no betacomponents
+beta = beta(beta.Date/100 ~= 199301, :);
+
 [~,ia,ib] = intersectIdDate(beta.Permno, beta.Date,master.Permno, master.Date);
 beta      = beta(ia,:);
 master    = master(ib,:);
@@ -78,7 +81,6 @@ reton = reton(idx,:);
 myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
 
 % Returns
-dsf    = loadresults('dsf');
 ret    = myunstack(dsf,'Ret');
 date   = ret.Date;
 permno = ret.Properties.VariableNames(2:end);
@@ -89,9 +91,6 @@ dsf.IsMicro = isMicrocap(dsf,'Prc');
 isMicro     = myunstack(dsf,'IsMicro');
 [~,pos]     = unique(isMicro.Date/100,'last');
 isMicro     = isMicro{pos,2:end};
-
-% Overnight return
-reton = loadresults('reton');
 
 % Beta components
 num               = myunstack(beta,'Num');
@@ -136,6 +135,6 @@ for ii = 12:nmonths
     idx       = ismember(midx, ii-12+1:ii);
     out(ii,:) = nanmean(illiq(idx,:),1);
 end
-% illiq = log(out);
-illiq = out;
+illiq = log(out);
+% illiq = out;
 save results\illiq illiq
