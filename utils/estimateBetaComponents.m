@@ -18,7 +18,7 @@ catch
     % compose later
     isComposable = mod(freq,5) == 0 && nargin == 4;
     if isComposable
-        path2data = '..\data\TAQ\sampled\5min\nobad_vw';        
+        path2data = '..\data\TAQ\sampled\5min\nobad_vw';
     else
         path2data = fullfile('..\data\TAQ\sampled\', sprintf('%dmin', freq),'nobad_vw');
     end
@@ -31,7 +31,7 @@ catch
         fmtname = sprintf('S%dm_%%04d.mat',freq);
         sampleData(grid, path2data, fmtname);
     end
-    
+
     if isComposable
         [spret, reton] = getMktRet(5, useproxy, useon, path2data);
     else
