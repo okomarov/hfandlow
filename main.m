@@ -76,6 +76,18 @@ correlations_dec = corrxs(allsig(idec,:,order),snames(order));
 % Plot
 figure
 dt = serial2datetime(datenum(1993,(1:size(signals_LF,1))+2,1)-1);
+for ii = 1:nsig*2
+    subplot(nsig,2,ii)
+    inan      = isnan(ptfret{order(ii)});
+    lvl       = cumprod(1+nan2zero(ptfret{order(ii)}));
+    lvl(inan) = NaN;
+    plot(dt,lvl)
+    set(gca, 'TickLabelInterpreter','latex','Layer','Top')
+end
+
+% Plot
+figure
+dt = serial2datetime(datenum(1993,(1:size(signals_LF,1))+2,1)-1);
 X  = datenum([min(dt(idec)), min(dt(idec)), max(dt(idec)),max(dt(idec))]);
 for ii = 1:nsig*2
     subplot(nsig,2,ii)
@@ -151,6 +163,7 @@ for ii = 1:nsig
         SR{ii}(jj,2) = s.SR(end);
     end
 end
+celldisp(SR)
 %% Conditioning: mkt cap
 cap   = getMktCap(xstr2num(permno),[],1);
 idx   = ismember(cap.Date, date);
@@ -206,7 +219,7 @@ hprd = ret(idx,:);
 hprd(inan(msubs,:)) = NaN;
 
 % Loop for all signals
-[num,n] = deal(zeros(opt.Ptf_num_univ,20,nsignals));
+% [num,n] = deal(zeros(opt.Ptf_num_univ,20,nsignals));
 for jj = 1:nsig
     rh     = nansum(hprd .* wh{jj,1}(msubs,:),2);
     rl     = nansum(hprd .* wl{jj,1}(msubs,:),2);
