@@ -57,7 +57,10 @@ res           = table(date, accumarray(subs,counts(:,end),[],@max),'VariableName
 end
 
 function res = betacomponents(s,cached, grid)
-% DO NOT RELY on local id!
+% NOTES:
+%   - Do not rely on s.mst.Id, it's local to the file.
+%   - Using log returns for assets and spyret
+
 nmst   = size(s.mst,1);
 spdays = cached{2};
 spyret = cached{1};
@@ -69,31 +72,37 @@ end
 % Dates and returns
 dates = s.data.Datetime;
 ret   = [NaN; diff(log(double(s.data.Price)))];
-idx   = [false; diff(rem(dates,1)) >= 0];
 if useon
-    [~,pos]   = ismembIdDate(s.mst.Permno, s.mst.Date, onret.Permno, onret.Date);
-    ret(~idx) = onret.RetCO(pos);
+    [imst,pos]   = ismembIdDate(s.mst.Permno, s.mst.Date, onret.Permno, onret.Date);
+    iover        = s.mst.From(imst);
+    ret(iover,:) = onret.RetCO(pos(imst));
+    idrop        = s.mst.From(~imst);
+    ret(idrop,:) = NaN;
 else
     % Keep all except overnight
-    ret = ret(idx,:);
+    iover = ~[false; diff(rem(dates,1)) >= 0];
+    ret(iover,:) = NaN;
 end
 
 if ~isempty(grid)
+    grid = grid + 0.1/(3600*24);
+
     % Mkt
     dt         = spyret{1}(:,1);
     [~,~,subs] = histcounts(mod(dt,1),grid);
     for ii = 1:numel(spyret)
         r          = spyret{ii}(:,2);
-        spyret{ii} = accumarray(subs, nan2zero(r)+1,[],@(x) prod(x)-1);
+        spyret{ii} = accumarray(subs, exp(nan2zero(r)),[],@(x) log(prod(x)));
     end
 
     % All others
     if ~issorted(s.mst.From)
         error('Unsorted mst!');
     end
-    [subs,id]  = ndgrid(subs,1:nmst);
-    [~,~,subs] = unique([id(:),subs(:)],'rows');
-    ret        = accumarray(subs, nan2zero(ret)+1,[],@(x) prod(x)-1);
+    [subs, id] = ndgrid(subs,1:nmst);
+    key        = 10.^ceil(log10(numel(grid))) * id(:) + subs(:);
+    [~,~,subs] = unique(key);
+    ret        = accumarray(subs, exp(nan2zero(ret)),[],@(x) log(prod(x)));
 else
     spyret = cellfun(@(x) x(:,2),spyret,'un',0);
 end
@@ -116,7 +125,7 @@ res     = s.mst(:,{'Permno','Date'});
 res.Num = accumarray(subsID(ikeep), prodret(ikeep),[],[],NaN);
 res.Den = accumarray(subsID(ikeep), spret(ikeep).^2,[],[],NaN);
 
-% Drop null 
+% Drop null
 res = res(res.Permno ~= 0,:);
 end
 
