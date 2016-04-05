@@ -96,8 +96,8 @@ if useon
     [idx,pos]            = ismember(serial2yyyymmdd(mktret(posOn,1)),spreton.Date);
     mktret(posOn(idx),2) = spreton.RetCO(pos(idx));
 else
-    retOn  = [];
-    mktret = mktret(iNotOn,:);
+    retOn             = [];
+    mktret(~iNotOn,:) = NaN;
 end
 end
 

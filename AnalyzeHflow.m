@@ -99,7 +99,8 @@ if ~isempty(grid)
     if ~issorted(s.mst.From)
         error('Unsorted mst!');
     end
-    [subs, id] = ndgrid(subs,1:nmst);
+    [~,~,subs] = histcounts(mod(dates,1),grid);
+    id         = RunLength(1:nmst,s.mst.To-s.mst.From+1);
     key        = 10.^ceil(log10(numel(grid))) * id(:) + subs(:);
     [~,~,subs] = unique(key);
     ret        = accumarray(subs, exp(nan2zero(ret)),[],@(x) log(prod(x)));
