@@ -45,6 +45,9 @@ function [bOpt,bVecWithProbs] = blockSizeCalibrate(ret,bVec,alpha,M,K,bAv,Tstart
         bVec = [1,2,4,6,8,10]';
     end   
 
+    % De-nan
+    ret = ret(all(~isnan(ret),2),:);
+    
     bLen           = max(size(bVec));
     empRejectProbs = zeros(bLen,1);
     DeltaHat       = sharpeRatioDiff(ret);
