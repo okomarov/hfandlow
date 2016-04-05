@@ -2,6 +2,15 @@
 OPT_LAGDAY   = 1;
 OPT_BETAFREQ = 75;
 OPT_USEON    = true;
+
+switch OPT_BETAFREQ
+    case 75
+        grid = [0, 9.75/24:OPT_BETAFREQ/(60*24):16/24];
+    case 30
+        grid = [0, 10/24:OPT_BETAFREQ/(60*24):16/24];
+    otherwise 
+        grid = [];
+end
 %% Select data
 % Index data
 datapath = '..\data\TAQ\sampled\5min\nobad_vw';
@@ -42,13 +51,6 @@ try
         beta = loadresults(sprintf('betacomponents%dm',OPT_BETAFREQ));
     end
 catch
-    if OPT_BETAFREQ ~= 5
-        grid        = [0 11/24:OPT_BETAFREQ/(60*24):16/24];
-        half_second = 0.5/(60*60*24);
-        grid        = grid + half_second;
-    else
-        grid = [];
-    end
     beta = estimateBetaComponents(OPT_BETAFREQ,OPT_USEON,false,grid);
 end
 % Drop january, no beta spyders, hence no betacomponents
