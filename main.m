@@ -8,8 +8,8 @@ OPT_PTF_DB = 5;
 OPT_SHRINK = [0.4,0.6,0.6,0.6];
 % OPT_SHRINK = [0.8,0.8,0.8,0.8];
 
-OPT_BLOCKS_DEC = {1 6 2 1}'; % whole horizon
-% OPT_BLOCKS_DEC = {1 8 2 1}';
+% OPT_BLOCKS_DEC = {4 2 1 1}'; % whole horizon
+OPT_BLOCKS_DEC = {1 6 4 2}';
 %% Data
 load(sprintf('results\\alldata_beta%d',OPT_FREQ))
 
@@ -224,23 +224,8 @@ for jj = 1:nsig
     ptfretd(isinf(ptfretd)) = NaN;
     figure
     plot(cumprod(nan2zero(ptfretd)+1))
-%     
-%     % Series to keep
-%     ikeep = ~inan & bin ~= 0;
-%     
-%     for ii = 1:max(msubs)
-%         imonth   = msubs == ii;
-%         retslice = ret(imonth, ikeep(ii,:));
-%         if ~isempty(retslice)
-%             % Accumulation indexes
-%             [row,col] = ndgrid(1:size(retslice,1), bin(ii, ikeep(ii,:)));
-%             subs      = [row(:), col(:)];
-%         
-%             % Mean as S(sum)/S(n)
-%             tmp         = accumarray(subs, retslice(:));
-%             num(:,:,jj) = num(:,:,jj) + tmp([1:10,end-9:end],:)';
-%             tmp         = accumarray(subs, 1);
-%             n(:,:,jj)   = n(:,:,jj) + tmp([1:10,end-9:end],:)';
-%         end
-%     end
+
+    retbyday(date(idx), ptfretd)
 end
+idt = date(idx) > 20010431;
+stratstats(date(date>20010431),ptfretd(idt,:)*100,'Frequency','d','IsPercentageReturn',true)
