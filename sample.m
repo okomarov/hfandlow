@@ -73,10 +73,10 @@ beta = beta(idx,:);
 % Add back mkt
 master = [master; mkt];
 
-% Overnight returns
-reton = loadresults('return_intraday_overnight');
-idx   = ismembIdDate(reton.Permno, reton.Date, master.Permno, master.Date);
-reton = reton(idx,:);
+% % Overnight returns
+% reton = loadresults('return_intraday_overnight');
+% idx   = ismembIdDate(reton.Permno, reton.Date, master.Permno, master.Date);
+% reton = reton(idx,:);
 
 % importFrenchData('F-F_Research_Data_5_Factors_2x3_daily_TXT.zip','results');
 %% Second stage
@@ -105,7 +105,7 @@ clear den num
 ff = loadresults('F-F_Research_Data_5_Factors_2x3_daily_TXT');
 ff = ff(ismember(ff.Date, unique(dsf.Date)),:);
 
-save(sprintf('results\\alldata_beta%d',OPT_BETAFREQ), 'master', 'date', 'permno', 'ret', 'isMicro', 'reton', 'beta', 'ff')
+save(sprintf('results\\alldata_beta%d',OPT_BETAFREQ), 'master', 'date', 'permno', 'ret', 'isMicro', 'beta', 'ff')
 %% Illiquidity
 myunstack = @(tb,vname) sortrows(unstack(tb(:,{'Permno','Date',vname}),vname,'Permno'),'Date');
 load('results\alldata_beta75','permno','date')
