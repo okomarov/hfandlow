@@ -1,9 +1,21 @@
 function [iA, iS] = sample_refresh(A,S)
-% date = 20050722;
-% A = getTaqData('symbol','AAPL',date,date);
-% S = getSpy(inf,date,date);
-% A = unique(A.Datetime);
-% S = unique(S.Datetime);
+% SAMPLE_REFRESH Sample a pair of dates with the refresh-time scheme
+%
+%   SAMPLE_REFRESH(A,S)
+%       A and S are vectors of serial dates
+%
+%   [iA, iS] = ...
+%       The outputs are logical indices that select the sampled points
+%
+%
+%   References:
+%   [1] Barndorff-Nielsen, O. E., Hansen, P. R., Lunde, A. & Shephard, N.
+%       "Multivariate realised kernels: Consistent positive semi-definite
+%        estimators of the covariation of equity prices with noise and
+%        non-synchronous trading", Journal of Econometrics 162,
+%        149–169 (2011)
+%
+% See also: DATENUM, FIXEDSAMPLING
 
 nA = numel(A);
 nS = numel(S);
@@ -18,20 +30,26 @@ while cA < nA && cS < nS
 
     if dateA > dateS
         iA(cA) = true;
-        while S(cS) <= dateA
-            cS = cS + 1;
+        try
+            while S(cS) <= dateA
+                cS = cS + 1;
+            end
+        catch
         end
         iS(cS-1) = true;
-        
+
         cA = cA+1;
-        
+
     else
         iS(cS) = true;
-        while A(cA) <= dateS
-            cA = cA + 1;
+        try
+            while A(cA) <= dateS
+                cA = cA + 1;
+            end
+        catch
         end
         iA(cA-1) = true;
-        
+
         cS = cS+1;
     end
 end
