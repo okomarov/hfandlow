@@ -1,4 +1,4 @@
-function [iA, iS] = sample_refresh(A,S)
+function [iA, iS] = sample_refresh(A,S,minstep)
 % SAMPLE_REFRESH Sample a pair of dates with the refresh-time scheme
 %
 %   SAMPLE_REFRESH(A,S)
@@ -16,6 +16,9 @@ function [iA, iS] = sample_refresh(A,S)
 %        149–169 (2011)
 %
 % See also: DATENUM, FIXEDSAMPLING
+if nargin < 3
+    minstep = 0;
+end
 
 nA = numel(A);
 nS = numel(S);
@@ -23,10 +26,20 @@ iA = false(nA,1);
 iS = false(nS,1);
 cA = 1;
 cS = 1;
+dateA = -1;
+dateS = -1;
 
-while cA < nA && cS < nS
-    dateA = A(cA);
-    dateS = S(cS);
+while cA <= nA && cS <= nS
+    newDateA = A(cA);
+    newDateS = S(cS);
+    if newDateA - dateA < minstep && newDateS - dateS < minstep
+        cA = cA + 1;
+        cS = cS + 1;
+        continue
+    end
+
+    dateA = newDateA;
+    dateS = newDateS;
 
     if dateA > dateS
         iA(cA) = true;
