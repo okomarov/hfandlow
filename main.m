@@ -6,7 +6,7 @@ OPT_PTF_UN = 5;
 OPT_PTF_DB = 5;
 
 OPT_SHRINK = [0.4,0.6,0.6,0.6];
-% OPT_SHRINK = [0.8,0.8,0.8,0.8];
+% OPT_SHRINK = [1,1,1,1];
 
 % OPT_BLOCKS_DEC = {4 2 1 1}'; % whole horizon
 OPT_BLOCKS_DEC = {1 6 4 2}';
@@ -16,6 +16,9 @@ load(sprintf('results\\alldata_beta%d',OPT_FREQ))
 %% Signals
 [signals_LF, hpr, rf, mdate] = make_signals_LF(ret,date,ff,OPT_SHRINK);
 signals_HF                   = make_signals_HF(xstr2num(permno),date,beta,OPT_SHRINK);
+
+% signals_LF = filter_signal(arima(1,0,1), signals_LF);
+% signals_HF = filter_signal(arima(1,0,1), signals_HF);
 
 % NaN-out intersection
 nsig     = size(signals_LF,3);
