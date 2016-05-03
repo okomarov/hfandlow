@@ -7,6 +7,11 @@ function [iA, iS] = sample_refresh(A,S,minstep)
 %   [iA, iS] = ...
 %       The outputs are logical indices that select the sampled points
 %
+% Example:
+%
+%   A       = getTaqData('symbol','AAPL',20070906,20070906);
+%   S       = getTaqData('symbol','SPY',20070906,20070906);
+%   [ia,is] = sample_refresh(A.Datetime, S.Datetime, minstep);
 %
 %   References:
 %   [1] Barndorff-Nielsen, O. E., Hansen, P. R., Lunde, A. & Shephard, N.
@@ -16,7 +21,7 @@ function [iA, iS] = sample_refresh(A,S,minstep)
 %        149–169 (2011)
 %
 % See also: DATENUM, FIXEDSAMPLING
-if nargin < 3
+if nargin < 3 || isempty(minstep)
     minstep = 0;
 end
 
