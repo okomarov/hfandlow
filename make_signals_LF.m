@@ -16,10 +16,10 @@ rf      = NaN(nmonths, 1);
 % Monthly
 for ii = 1:nmonths
     idx             = midx == ii;
-    signals(ii,:,1) = getBetasLF(ret, factors, idx, w(1), isBayesW);
+    r               = ret(idx,:);
+    signals(ii,:,1) = getBetasLF(r, factors(idx,:), w(1), isBayesW, size(r,1));
 
     % HPR
-    r                 = ret(idx,:);
     inan              = isnan(r);
     r(inan)           = 0;
     hpr(ii,:)         = prod(1+r)-1;
@@ -31,32 +31,23 @@ end
 % Quarterly
 for ii = 4:nmonths
     idx             = ismember(midx, ii-4+1:ii);
-    signals(ii,:,2) = getBetasLF(ret, factors, idx, w(2), isBayesW, 50);
+    signals(ii,:,2) = getBetasLF(ret(idx,:), factors(idx,:), w(2), isBayesW, 50);
 end
 % Semi-annual
 for ii = 6:nmonths
     idx             = ismember(midx, ii-6+1:ii);
-    signals(ii,:,3) = getBetasLF(ret, factors, idx, w(3), isBayesW, 100);
+    signals(ii,:,3) = getBetasLF(ret(idx,:), factors(idx,:), w(3), isBayesW, 100);
 end
 % Annual
 for ii = 12:nmonths
     idx             = ismember(midx, ii-12+1:ii);
-    signals(ii,:,4) = getBetasLF(ret, factors, idx, w(4), isBayesW, 200);
+    signals(ii,:,4) = getBetasLF(ret(idx,:), factors(idx,:), w(4), isBayesW, 200);
 end
 end
 
-function betas = getBetasLF(ret, factors, idx, w, isBayesW, minobs)
-r     = ret(idx,:);
-ff    = factors(idx,:);
-betas = NaN(1,size(r,2));
-n     = size(r,1);
+function betas = getBetasLF(r, ff, w, isBayesW, minobs)
 
-if nargin < 7
-    minobs = n;
-end
-[betas(1,:),sigma_ts] = getBetasLF_(r(1:n,:),ff(1:n,:),minobs,isBayesW);
-
-betas = sum(betas,1);
+[betas,sigma_ts] = getBetasLF_(r, ff, minobs, isBayesW);
 
 if isBayesW
     sigma_xs = nanvar(betas,2);
