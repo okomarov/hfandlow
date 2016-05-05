@@ -1,12 +1,13 @@
-function betas = estimateBetaComponents_refresh(useon, badPriceMult, consolidateType, minRefStep)
+function betas = estimateBetaComponents_refresh(useon, badPriceMult, consolidateType, minRefStep, method)
 if nargin < 1 || isempty(useon), useon           = true;                end
 if nargin < 2,                   badPriceMult    = [];                  end
 if nargin < 3,                   consolidateType = 'volumeWeighted';    end
 if nargin < 4,                   minRefStep      = 30/(24*60);          end
+if nargin < 5,                   method          = 'refresh';           end
 
 try
-    fprintf('%s: loading betacomponents_refresh.\n', mfilename)
-    betas = loadresults('betacomponents_refresh');
+    fprintf('%s: loading betacomponents_%s.\n', mfilename,method)
+    betas = loadresults(['betacomponents_', method]);
 catch
     fprintf('%s: betacomponents not found. Estimating...\n', mfilename)
 
@@ -34,10 +35,16 @@ catch
     spymst                                     = cacheReplicateSpret(spymst, mst);
 
     % Calculate beta components: sum(r*benchr) and sum(benchr^2)
-    fprintf('%s: creating betacomponents_refresh.\n', mfilename)
+    fprintf('%s: creating betacomponents_%s.\n', mfilename,method)
     opt   = struct('HasOvernight',useon,'BadPriceMultiplier',badPriceMult,...
                    'TimestampConsolidation',consolidateType,'MinRefreshStep',minRefStep);
-    betas = Analyze('betacomponents_refresh', [], [mst,spymst], path2data,[],6,opt);
+
+    switch method
+        case 'preaverage'
+            betas = Analyze('betacomponents_preav', [], [mst,spymst], path2data,[],6,opt);
+        case 'refresh'
+            betas = Analyze('betacomponents_refresh', [], [mst,spymst], path2data,[],6,opt);
+    end
 end
 end
 

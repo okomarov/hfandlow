@@ -10,6 +10,7 @@ OPT_SHRINK = [0.4,0.6,0.6,0.6];
 
 % OPT_BLOCKS_DEC = {4 2 1 1}'; % whole horizon
 OPT_BLOCKS_DEC = {1 6 4 2}';
+% OPT_BLOCKS_DEC = {6;2;8;8} % Preav
 %% Data
 load(sprintf('results\\alldata_beta%d',OPT_FREQ))
 
