@@ -10,7 +10,8 @@ OPT_SHRINK = [0.4,0.6,0.6,0.6];
 
 % OPT_BLOCKS_DEC = {4 2 1 1}'; % whole horizon
 OPT_BLOCKS_DEC = {1 6 4 2}';
-% OPT_BLOCKS_DEC = {6;2;8;8} % Preav
+% OPT_BLOCKS_DEC = {6;2;8;8}   % Preav
+% OPT_BLOCKS_DEC = {1;2;10;10} % Refresh 75min
 %% Data
 load(sprintf('results\\alldata_beta%d',OPT_FREQ))
 
@@ -18,8 +19,8 @@ load(sprintf('results\\alldata_beta%d',OPT_FREQ))
 [signals_LF, hpr, rf, mdate] = make_signals_LF(ret,date,ff,OPT_SHRINK);
 signals_HF                   = make_signals_HF(xstr2num(permno),date,beta,OPT_SHRINK);
 
-% signals_LF = filter_signal(arima(1,0,1), signals_LF);
-% signals_HF = filter_signal(arima(1,0,1), signals_HF);
+% signals_LF = filter_signal(arima(1,0,1), signals_LF,false);
+% signals_HF = filter_signal(arima(1,0,1), signals_HF,false);
 
 % NaN-out intersection
 nsig     = size(signals_LF,3);
