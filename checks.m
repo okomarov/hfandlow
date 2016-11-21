@@ -39,7 +39,7 @@ for ii = 1:nsig*2
 end
 close all
 
-YLIM  = [0,2.5];
+YLIM  = [0,2];
 decdt = [dt(find(idec,1,'first')-1), dt(idec)];
 for ii = 1:nsig*2
     figure
@@ -51,7 +51,7 @@ for ii = 1:nsig*2
     uistack(h,'bottom')
     set(gca,'ColorOrderIndex',1)
     plot(decdt(1:mrkStep:end),lvl(1:mrkStep:end,1),'x',decdt(1:mrkStep:end),lvl(1:mrkStep:end,2),'+')
-    set(gca, 'TickLabelInterpreter','latex','Ylim',YLIM,'YTick',0:1:YLIM(2),'Layer','Top')
+    set(gca, 'TickLabelInterpreter','latex','Ylim',YLIM,'YTick',0:0.5:YLIM(2),'Layer','Top')
     print(sprintf('strat_dec%d',ii),'-depsc','-r200')
 end
 close all
