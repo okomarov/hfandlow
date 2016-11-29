@@ -3,6 +3,7 @@ function res = estimateOverIntraCloseRet()
 % 
 %   The overnight return is defined as CRSP's close-to-close 
 %   return minus TAQ's open-to-close (intraday) return.
+%   It refers to current date, i.e. previous close to current open.
 %
 %   NOTES:
 %       - RetCO is in logs
